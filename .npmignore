@@ -1,1 +1,4 @@
-/backend/
+/backend/.env
+/backend/.env_copy
+/backend/node_modules
+
