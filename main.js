@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const HTTP_PORT = process.env.PORT || 8080;
+const HTTP_PORT = process.env.DB_PORT || 8080;
 const dataProcessor = require("./data_processor.js");
 
 // Shows that server is up
