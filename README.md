@@ -46,3 +46,4 @@ Git will be the main VC used for collaborative development and tracking changes.
 
 ### Other Tools
 Visual Studio Code will be the primary development tool. Python, Git, and other extensions will be used to assist in development and version control.
+Hi
