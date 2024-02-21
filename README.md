@@ -1,11 +1,7 @@
 # Group_01
 
 ## Developers
-| Name        |    Role   |     Github      |         Email        |
-| ----------- | --------- | --------------- | -------------------- |
-| Adrian Lam  | Back-End  | Adrian-seneca   | alam90@myseneca.ca   |
-| Nate Ling   | Front-End | n3ling          | nling@myseneca.ca    |
-| Jimmy Tran  | Front-End | JTran001        | jtran110@myseneca.ca |
+Refer to official group repo.
 
 ## Project Description
 
