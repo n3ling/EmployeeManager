@@ -1,8 +1,0 @@
-DB_NAME=capstone
-DB_USER=o2zp1ugj2egas74vc6g6
-DB_PASSWORD=pscale_pw_BddfNFkr6yxR2tdkuUCbiE7Y3GCtARI2LSo7rLJLlny
-DB_HOST=aws.connect.psdb.cloud
-DB_PORT=3306
-MYSQL_ATTR_SSL_CA=/etc/ssl/cacert-2023-12-12.pem
-DATABASE_URL='mysql://o2zp1ugj2egas74vc6g6:pscale_pw_BddfNFkr6yxR2tdkuUCbiE7Y3GCtARI2LSo7rLJLlny@aws.connect.psdb.cloud/capstone?ssl={"rejectUnauthorized":true}'
-  
