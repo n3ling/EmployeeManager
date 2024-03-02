@@ -2,11 +2,28 @@ const express = require("express");
 const app = express();
 const HTTP_PORT = process.env.DB_PORT || 8080;
 const dataProcessor = require("./data_processor.js");
+const sequelize = require("sequelize");
 
 // Shows that server is up
 function onHttpStart() {
     console.log("Express http server listening on: " + HTTP_PORT);
 };
+
+
+//-------SIGNAL CATCHING FOR GRACEFUL SHUTDOWN-------
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down server.');
+    dataProcessor.disconnectDB();
+
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down server.');
+    dataProcessor.disconnectDB();
+
+    process.exit(0);
+});
 
 
 //-------MIDDLEWARE-------
@@ -58,6 +75,9 @@ app.get("/", (req, res) => {
     res.send("<h1>Server is running</h1>");
 });
 
+app.post("/employees/add", (req, res) => {
+
+});
 
 
 
@@ -74,3 +94,5 @@ dataProcessor.initialize()
     console.log(errMsg);
     res.status(500).send("Unable to sync with the database");
 });
+
+

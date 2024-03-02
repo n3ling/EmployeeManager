@@ -1,5 +1,4 @@
 require('dotenv').config();
-  
 
 const Sequelize = require('sequelize');
 
@@ -34,15 +33,21 @@ sequelize.authenticate().then(()=> console.log('Connection success.'))
 
 //-------DATA MODELS-------
 
-//Employee data model
+// Employee data model
 var Employee = sequelize.define('Employee', {
     employeeNum: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    givenName: Sequelize.STRING,
-    surname: Sequelize.STRING,
+    givenName: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    surname: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
     email: Sequelize.STRING,
     password: Sequelize.STRING,
     SIN: Sequelize.STRING,
@@ -50,11 +55,16 @@ var Employee = sequelize.define('Employee', {
     addressCity: Sequelize.STRING,
     addressState: Sequelize.STRING,
     addressPostal: Sequelize.STRING,
-    isManager: Sequelize.BOOLEAN,
+    isManager: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+    },
     employeeManagerNum: Sequelize.INTEGER,
-    status: Sequelize.STRING,
+    status: {
+        type: Sequelize.ENUM('Active', 'Inactive')
+    },
     department: Sequelize.INTEGER,
-    hireDate: Sequelize.STRING,
+    hireDate: Sequelize.DATEONLY,
 });
 
 //-------INITIALIZERS-------
@@ -72,3 +82,34 @@ exports.initialize = function initialize() {
         });
     });
 };
+
+//-------EMPLOYEES-------
+exports.addOneEmployee = function addOneEmployee(employeeData) {
+    return new Promise ((res, rej) => {
+        if (typeof(employeeData.employeeManagerNum) === 'string'){
+            employeeData.employeeManagerNum = parseInt(employeeData.employeeManagerNum);
+        }
+        if (typeof(employeeData.hireDate) === 'string'){
+            employeeData.hireDate = Date.parse(employeeData.hireDate);
+        }
+
+        Employee.create(employeeData)
+        .then((emp) => {
+            resolve();
+        })
+        .catch((err) => {
+            reject(`Failed to create ${Employee.name} record for ${employeeData.surname}, ${employeeData.givenName}: ${err}`);
+        });
+    });
+};
+
+
+
+//-------CLEAN UP-------
+
+exports.disconnectDB = function disconnectDB(){
+    return new Promise((res, rej) => {
+        console.log('Closing DB connection.')
+        sequelize.close();
+    });
+}
