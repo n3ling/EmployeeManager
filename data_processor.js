@@ -35,7 +35,7 @@ sequelize.authenticate().then(()=> console.log('Connection success.'))
 
 // Employee data model
 var Employee = sequelize.define('Employee', {
-    employeeNum: {
+    employeeID: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
@@ -51,15 +51,15 @@ var Employee = sequelize.define('Employee', {
     email: Sequelize.STRING,
     password: Sequelize.STRING,
     SIN: Sequelize.STRING,
-    addressStreet: Sequelize.STRING,
-    addressCity: Sequelize.STRING,
-    addressState: Sequelize.STRING,
-    addressPostal: Sequelize.STRING,
+    addrStreet: Sequelize.STRING,
+    addrCity: Sequelize.STRING,
+    addrProv: Sequelize.STRING,
+    addrPostal: Sequelize.STRING,
     isManager: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
     },
-    employeeManagerNum: Sequelize.INTEGER,
+    empManagerID: Sequelize.INTEGER,
     status: {
         type: Sequelize.ENUM('Active', 'Inactive')
     },
@@ -84,21 +84,95 @@ exports.initialize = function initialize() {
 };
 
 //-------EMPLOYEES-------
-exports.addOneEmployee = function addOneEmployee(employeeData) {
-    return new Promise ((res, rej) => {
-        if (typeof(employeeData.employeeManagerNum) === 'string'){
-            employeeData.employeeManagerNum = parseInt(employeeData.employeeManagerNum);
+exports.addOneEmployee = function addOneEmployee(empData) {
+    return new Promise ((resolve, reject) => {
+
+        // Casting to fields to appropriate type
+        if (typeof(empData.empManagerID) === 'string'){
+            empData.empManagerID = parseInt(empData.empManagerID);
         }
-        if (typeof(employeeData.hireDate) === 'string'){
-            employeeData.hireDate = Date.parse(employeeData.hireDate);
+        if (typeof(empData.hireDate) === 'string'){
+            empData.hireDate = Date.parse(empData.hireDate);
         }
 
-        Employee.create(employeeData)
+        Employee.create(empData)
         .then((emp) => {
+            console.log(`Record for ${emp.surname}, ${emp.givenName} successfully created.`);
             resolve();
         })
         .catch((err) => {
-            reject(`Failed to create ${Employee.name} record for ${employeeData.surname}, ${employeeData.givenName}: ${err}`);
+            console.log(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+            reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+        });
+    });
+};
+
+exports.getAllEmployees = function getAllEmployees() {
+    return new Promise ((resolve, reject) => {
+        Employee.findAll({raw: true, nest: true})
+        .then((allEmp) => {
+            resolve(allEmp);
+        })
+        .catch((err) => {
+            reject('No results returned: ' + err);
+        });
+    });
+};
+
+exports.updateOneEmployee = function updateOneEmployee(empData) {
+    return new Promise ((resolve, reject) => {
+        // Casting to fields to appropriate type
+        if (typeof(empData.empManagerID) === 'string'){
+            empData.empManagerID = parseInt(empData.empManagerID);
+        }
+        if (typeof(empData.hireDate) === 'string'){
+            empData.hireDate = Date.parse(empData.hireDate);
+        }
+
+        // TODO: Validation for status
+
+        Employee.update({
+            employeeID: empData.employeeID,
+            givenName: empData.givenName,
+            surname: empData.surname,
+            email: empData.email,
+            password: empData.password,
+            SIN: empData.SIN,
+            addrStreet: empData.addrStreet,
+            addrCity: empData.addrCity,
+            addrProv: empData.addrProv,
+            addrPostal: empData.addrPostal,
+            isManager: empData.isManager,
+            empManagerID: empData.empManagerID,
+            status: empData.status,
+            department: empData.department,
+            hireDate: empData.hireDate,
+        }, {
+            where: {employeeID: empData.employeeID}
+        })
+        .then(() => {
+            console.log(`Record for ${empData.surname}, ${empData.givenName} updated.`);
+            resolve();
+        })
+        .catch((err) => {
+            console.log(`Failed to update the record for ${empData.surname}, ${empData.givenName}: ${err}`);
+            reject(`Failed to update the record for ${empData.surname}, ${empData.givenName}: ${err}`);
+        });
+    })
+}
+
+exports.deleteEmployeeByID = function deleteEmployeeByID(empID) {
+    return new Promise ((resolve, reject) => {
+        Employee.destroy({
+            where: {employeeID: empID}
+        })
+        .then(() => {
+            console.log(`Employee #${empID} deleted.`);
+            resolve();
+        })
+        .catch((err) => {
+            console.log(`Failed to delete employee #${empID}: ${err}`);
+            reject(`Failed to delete employee #${empID}: ${err}`);
         });
     });
 };

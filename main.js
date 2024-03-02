@@ -1,8 +1,10 @@
+
 const express = require("express");
 const app = express();
 const HTTP_PORT = process.env.DB_PORT || 8080;
 const dataProcessor = require("./data_processor.js");
 const sequelize = require("sequelize");
+const path = require("path");
 
 // Shows that server is up
 function onHttpStart() {
@@ -75,17 +77,60 @@ app.get("/", (req, res) => {
     res.send("<h1>Server is running</h1>");
 });
 
-app.post("/employees/add", (req, res) => {
 
+//-------EMPLOYEE ROUTES-------
+
+app.post("/employees/add", (req, res) => {
+    dataProcessor.addOneEmployee(req.body)
+    .then(() => {
+        res.redirect('/'); //TODO: change to confirmation page
+    })
+    .catch((err) => {
+        console.log({message: err});
+        //TODO: render error page
+    });
 });
 
+app.get("/employees", (req, res) => {
+    console.log('getting all employees');
+    dataProcessor.getAllEmployees()
+    .then((allEmp) => {
+        res.type('json');
+        res.setHeader('Content-Type', 'application/json');
+        res.json(allEmp);
+    })
+    .catch((err) => {
+        console.log({message: err});
+        res.json({message: err});
+    })
+})
+
+app.post("/employees/update", (req, res) => {
+    dataProcessor.updateOneEmployee(req.body)
+    .then(() => {
+        res.redirect('/'); //TODO: change to confirmation page
+    })
+    .catch((err) => {
+        console.log({message: err});
+        //TODO: render error page
+    });
+})
+
+app.delete("/employees/delete/:empID", (req, res) => {
+    dataProcessor.deleteEmployeeByID(req.params.empID)
+    .then(() => {
+        res.redirect('/'); //TODO: change to confirmation page
+    })
+    .catch(() => {
+        res.status(500).send(`Failed to delete employee #${req.params.empID}.`);
+    })
+});
 
 
 //-------SERVER OPERATION-------
 
 // Initialize the server
 dataProcessor.initialize()
-//.then(dataServiceAuth.initialize)
 .then(()=>{
     //listen on HTTP_PORT
     app.listen(HTTP_PORT, onHttpStart);
