@@ -5,6 +5,7 @@ const HTTP_PORT = process.env.DB_PORT || 8080;
 const dataProcessor = require("./data_processor.js");
 const sequelize = require("sequelize");
 const path = require("path");
+const cors = require("cors");
 
 // Shows that server is up
 function onHttpStart() {
@@ -36,6 +37,13 @@ app.use(express.static("public"));
 // Handle form data without file upload
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+
+// Allow for cross site access
+app.use(cors());
+corsOption = {
+    origin: ["https://employee-manager-ui.vercel.app/", "http://localhost:8080"]
+}
+app.use(cors(corsOption));
 
 // For highlighting active menu
 // ActiveRoute value = active route, eg, "/employees/add"
@@ -74,7 +82,7 @@ function ensureLogin(req, res, next) {
 // Default 'route'
 app.get("/", (req, res) => {
     //res.render("home");
-    res.send("<h1>Server is running</h1>");
+    res.status(200).send("<h1>Server is running</h1>");
 });
 
 
@@ -83,7 +91,7 @@ app.get("/", (req, res) => {
 app.post("/employees/add", (req, res) => {
     dataProcessor.addOneEmployee(req.body)
     .then(() => {
-        res.redirect('/'); //TODO: change to confirmation page
+        res.status(200).redirect('/'); //TODO: change to confirmation page
     })
     .catch((err) => {
         console.log({message: err});
@@ -97,7 +105,7 @@ app.get("/employees", (req, res) => {
     .then((allEmp) => {
         res.type('json');
         res.setHeader('Content-Type', 'application/json');
-        res.json(allEmp);
+        res.status(200).json(allEmp);
     })
     .catch((err) => {
         console.log({message: err});
@@ -108,7 +116,7 @@ app.get("/employees", (req, res) => {
 app.post("/employees/update", (req, res) => {
     dataProcessor.updateOneEmployee(req.body)
     .then(() => {
-        res.redirect('/'); //TODO: change to confirmation page
+        res.status(200).redirect('/'); //TODO: change to confirmation page
     })
     .catch((err) => {
         console.log({message: err});
@@ -119,7 +127,7 @@ app.post("/employees/update", (req, res) => {
 app.delete("/employees/delete/:empID", (req, res) => {
     dataProcessor.deleteEmployeeByID(req.params.empID)
     .then(() => {
-        res.redirect('/'); //TODO: change to confirmation page
+        res.status(200).redirect('/'); //TODO: change to confirmation page
     })
     .catch(() => {
         res.status(500).send(`Failed to delete employee #${req.params.empID}.`);
