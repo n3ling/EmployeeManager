@@ -91,7 +91,7 @@ app.get("/", (req, res) => {
 app.post("/employees/add", (req, res) => {
     dataProcessor.addOneEmployee(req.body)
     .then(() => {
-        res.status(200).redirect('/'); //TODO: change to confirmation page
+        res.status(200);
     })
     .catch((err) => {
         console.log({message: err});
@@ -100,37 +100,54 @@ app.post("/employees/add", (req, res) => {
 });
 
 app.get("/employees", (req, res) => {
-    console.log('getting all employees');
-    dataProcessor.getAllEmployees()
-    .then((allEmp) => {
-        res.type('json');
-        res.setHeader('Content-Type', 'application/json');
-        res.status(200).json(allEmp);
-    })
-    .catch((err) => {
-        console.log({message: err});
-        res.json({message: err});
-    })
+    // No queries, get all employees
+    if (!Object.keys(req.query).length){
+        dataProcessor.getAllEmployees()
+        .then((allEmp) => {
+            res.type('json');
+            res.setHeader('Content-Type', 'application/json');
+            res.status(200).json(allEmp);
+        })
+        .catch((err) => {
+            console.log({message: err});
+            res.json({message: err});
+        })
+    }
+    // Queries provided, filtering search by field and value
+    else {
+        let searchField = Object.keys(req.query)[0];
+        let searchVal = Object.values(req.query)[0];
+        dataProcessor.getEmployeesByField(searchField, searchVal)
+        .then((matchedEmp) => {
+            res.type('json');
+            res.setHeader('Content-Type', 'application/json');
+            res.status(200).json(matchedEmp);
+        })
+        .catch((err) => {
+            console.log({message: err});
+            res.json({message: err});
+        })
+    }
 })
 
 app.post("/employees/update", (req, res) => {
     dataProcessor.updateOneEmployee(req.body)
     .then(() => {
-        res.status(200).redirect('/'); //TODO: change to confirmation page
+        res.status(200);
     })
     .catch((err) => {
         console.log({message: err});
-        //TODO: render error page
+        res.status(400);
     });
 })
 
 app.delete("/employees/delete/:empID", (req, res) => {
     dataProcessor.deleteEmployeeByID(req.params.empID)
     .then(() => {
-        res.status(200).redirect('/'); //TODO: change to confirmation page
+        res.status(200);
     })
     .catch(() => {
-        res.status(500).send(`Failed to delete employee #${req.params.empID}.`);
+        res.status(400).send(`Failed to delete employee #${req.params.empID}.`);
     })
 });
 
