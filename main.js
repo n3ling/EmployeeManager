@@ -149,3 +149,4 @@ dataProcessor.initialize()
 });
 
 
+module.exports = app;
