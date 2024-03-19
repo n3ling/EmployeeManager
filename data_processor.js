@@ -67,9 +67,20 @@ var Employee = sequelize.define('Employee', {
     hireDate: Sequelize.DATEONLY,
 });
 
+// Enum object for valid fields in all lowercase
+const EmpFields = [
+    'givenname',  'surname',
+    'email',      'addrcity',
+    'addrprov',   'addrpostal',
+    'ismanager',  'status',
+    'department'
+  ]
+exports.EmpFields = EmpFields;
+
+
 //-------INITIALIZERS-------
 
-//populates the employees and departments arrays from json files
+// Sync the table schema with the database
 exports.initialize = function initialize() {
     return new Promise ((resolve, reject) => {
         sequelize.sync()
@@ -84,6 +95,7 @@ exports.initialize = function initialize() {
 };
 
 //-------EMPLOYEES-------
+// Add a single employee
 exports.addOneEmployee = function addOneEmployee(empData) {
     return new Promise ((resolve, reject) => {
 
@@ -107,6 +119,7 @@ exports.addOneEmployee = function addOneEmployee(empData) {
     });
 };
 
+// Retrieve all employees
 exports.getAllEmployees = function getAllEmployees() {
     return new Promise ((resolve, reject) => {
         Employee.findAll({raw: true, nest: true})
@@ -119,6 +132,34 @@ exports.getAllEmployees = function getAllEmployees() {
     });
 };
 
+// Retrieve a list of employees with the matching status
+exports.getEmployeesByField = function getEmployeesByField(field, val) {
+    if (typeof(field) != "string") {
+        field = String(field);
+    }    
+    field = field.toLowerCase();
+
+    if (typeof(val) === "string") {
+        val = val.toLowerCase();
+    }
+    
+    return new Promise ((resolve, reject) => {
+        Employee.findAll({
+            where: {[field]: val},
+            raw: true,
+            nest: true
+        })
+        .then((matchedEmployees) => {
+            resolve(matchedEmployees);
+        })
+        .catch((error) => {
+            reject(`No employees with ${field}: ${val}: ` + error);
+        });
+    });
+
+};
+
+// Update the employee with the matching employee ID
 exports.updateOneEmployee = function updateOneEmployee(empData) {
     return new Promise ((resolve, reject) => {
         // Casting to fields to appropriate type
@@ -161,6 +202,7 @@ exports.updateOneEmployee = function updateOneEmployee(empData) {
     })
 }
 
+// Delete the employee with the matching employee ID
 exports.deleteEmployeeByID = function deleteEmployeeByID(empID) {
     return new Promise ((resolve, reject) => {
         Employee.destroy({
