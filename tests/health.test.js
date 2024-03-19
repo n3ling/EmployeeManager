@@ -41,11 +41,11 @@ describe('CRUD Tests', () => {
         expect(res.body[6].givenName).toBe('Tester');
         expect(res.body[6].surname).toBe('Fellow');
         expect(res.body[6].email).toBe('tester@email.com');
-        console.log(successResponse)
+        //console.log(successResponse)
       });
     test('update test should update employee', async () => {
-        const employeeID = 7;
         const updatedEmployee = {
+            employeeID: 7,
             givenName: "Updated",
             surname: "Fellow",
             email: "updated@email.com",
@@ -66,5 +66,10 @@ describe('CRUD Tests', () => {
         expect(res.body[6].givenName).toBe('Updated');
         expect(res.body[6].email).toBe('updated@email.com');
     })
-
+    test('delete test should delete employee given id', async () => {
+        const employeeID = 7;
+        const res = await request(app)
+            .delete(`/employees/delete/${employeeID}`)
+            .expect(200);
+    })
 });
