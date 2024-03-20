@@ -42,10 +42,12 @@ describe('CRUD Tests', () => {
         expect(res.body[6].surname).toBe('Fellow');
         expect(res.body[6].email).toBe('tester@email.com');
         //console.log(successResponse)
-      });
+      },10000);
     test('update test should update employee', async () => {
+        const resGet = await request(app).get('/employees');
+        
         const updatedEmployee = {
-            employeeID: 7,
+            employeeID: resGet.body.length,
             givenName: "Updated",
             surname: "Fellow",
             email: "updated@email.com",
@@ -63,13 +65,13 @@ describe('CRUD Tests', () => {
             .put(`/employees/update`)
             .send(updatedEmployee);
         expect(res.statusCode).toEqual(200);
-        expect(res.body[6].givenName).toBe('Updated');
-        expect(res.body[6].email).toBe('updated@email.com');
-    })
+        expect(res.body[resGet.body.length].givenName).toBe('Updated');
+        expect(res.body[resGet.body.length].email).toBe('updated@email.com');
+    },10000)
     test('delete test should delete employee given id', async () => {
-        const employeeID = 7;
+        const resGet = await request(app).get('/employees');
         const res = await request(app)
-            .delete(`/employees/delete/${employeeID}`)
+            .delete(`/employees/delete/${res.body[resGet.body.length].employeeID}`)
             .expect(200);
-    })
+    },10000)
 });
