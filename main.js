@@ -91,11 +91,11 @@ app.get("/", (req, res) => {
 app.post("/employees/add", (req, res) => {
     dataProcessor.addOneEmployee(req.body)
     .then(() => {
-        res.status(200);
+        res.status(200).json({msg: "New user added."});
     })
     .catch((err) => {
         console.log({message: err});
-        //TODO: render error page
+        res.status(400).json({msg: err});
     });
 });
 
@@ -133,21 +133,22 @@ app.get("/employees", (req, res) => {
 app.post("/employees/update", (req, res) => {
     dataProcessor.updateOneEmployee(req.body)
     .then(() => {
-        res.status(200);
+        res.status(200).json({msg: "User updated."});
     })
     .catch((err) => {
         console.log({message: err});
-        res.status(400);
+        res.status(400).json({msg: err});
     });
 })
 
 app.delete("/employees/delete/:empID", (req, res) => {
     dataProcessor.deleteEmployeeByID(req.params.empID)
     .then(() => {
-        res.status(200);
+        res.status(200).json({msg: "User deleted."});
     })
-    .catch(() => {
-        res.status(400).send(`Failed to delete employee #${req.params.empID}.`);
+    .catch((err) => {
+        console.log({message: err});
+        res.status(400).json({msg: err});
     })
 });
 
