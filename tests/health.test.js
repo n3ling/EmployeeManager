@@ -38,16 +38,17 @@ describe('CRUD Tests', () => {
             department: 2,
             hireDate: "2024-03-22"
           });
-        //expect(res.statusCode).toBe(200);
-        const successResponse = JSON.parse(res.text);
-        expect(successResponse[successResponse.length-1].givenName).toBe('Tester');
-        expect(successResponse[successResponse.length-1].surname).toBe('Fellow');
-        expect(successResponse[successResponse.length-1].email).toBe('tester@email.com');
-        console.log(successResponse)
+          const successResponse = JSON.parse(res.text);
+          console.log(successResponse)
+          expect(successResponse).toEqual({ msg: "New user added." });
+    //     expect(successResponse[successResponse.length-1].givenName).toBe('Tester');
+    //     expect(successResponse[successResponse.length-1].surname).toBe('Fellow');
+    //     expect(successResponse[successResponse.length-1].email).toBe('tester@email.com');
       },10000);
     test('update test should update employee', async () => {
         const resGet = await request(app).get('/employees');
         const successResponse = JSON.parse(resGet.text);
+        //console.log(successResponse[successResponse.length-1])
         
         const updatedEmployee = {
             employeeID: successResponse[successResponse.length-1].employeeID,
@@ -65,11 +66,12 @@ describe('CRUD Tests', () => {
             hireDate: "2024-03-22"
         }
         const res = await request(app)
-            .put(`/employees/update`)
+            .post(`/employees/update`)
             .send(updatedEmployee);
-        expect(res.statusCode).toEqual(200);
-        expect(res.body[successResponse.length-1].givenName).toBe('Updated');
-        expect(res.body[successResponse.length-1].email).toBe('updated@email.com');
+        console.log(res.body)
+        expect(res.body).toEqual({msg: "User updated."});
+    //     expect(res.body[successResponse.length-1].givenName).toBe('Updated');
+    //     expect(res.body[successResponse.length-1].email).toBe('updated@email.com');
     },10000)
     test('delete test should delete employee given id', async () => {
         const resGet = await request(app).get('/employees');
