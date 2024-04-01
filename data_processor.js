@@ -103,28 +103,30 @@ exports.addOneEmployee = function addOneEmployee(empData) {
         // Hash the password
         bcrypt.hash(empData.password, 10).then(hash => {
             empData.password = hash;
+            
+            // Casting to fields to appropriate type
+            if (typeof(empData.empManagerID) === 'string'){
+                empData.empManagerID = parseInt(empData.empManagerID);
+            }
+            if (typeof(empData.hireDate) === 'string'){
+                empData.hireDate = Date.parse(empData.hireDate);
+            }            
+
+            Employee.create(empData)
+            .then((emp) => {
+                console.log(`Record for ${emp.surname}, ${emp.givenName} successfully created.`);
+                resolve();
+            })
+            .catch((err) => {
+                console.log(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+                reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+            });
         })
         .catch(err => {
             console.log(err);
-        })
-
-        // Casting to fields to appropriate type
-        if (typeof(empData.empManagerID) === 'string'){
-            empData.empManagerID = parseInt(empData.empManagerID);
-        }
-        if (typeof(empData.hireDate) === 'string'){
-            empData.hireDate = Date.parse(empData.hireDate);
-        }
-
-        Employee.create(empData)
-        .then((emp) => {
-            console.log(`Record for ${emp.surname}, ${emp.givenName} successfully created.`);
-            resolve();
-        })
-        .catch((err) => {
-            console.log(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
             reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
-        });
+
+        })
     });
 };
 
