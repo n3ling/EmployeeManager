@@ -49,13 +49,65 @@ var Employee = sequelize.define('Employee', {
         type: Sequelize.STRING,
         allowNull: false
     },
-    email: Sequelize.STRING,
-    password: Sequelize.STRING,
+    email: {
+        type: Sequelize.STRING,
+        unique: true,
+        allowNull: false,
+        validate: {
+            is: /^[a-zA-Z0-9](?=.*@[a-zA-Z]+\.).*[a-zA-Z0-9]$/i
+        }
+    },
+    password: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
     SIN: Sequelize.STRING,
     addrStreet: Sequelize.STRING,
-    addrCity: Sequelize.STRING,
-    addrProv: Sequelize.STRING,
-    addrPostal: Sequelize.STRING,
+    addrCity: {
+        type: Sequelize.STRING,
+        validate: {
+            is: /[a-zA-Z]+/i
+        }
+    },
+    addrProv: {
+        type: Sequelize.STRING,
+        validate: {
+            isIn: [[
+                "AB",
+                "BC",
+                "MB", 
+                "NB",
+                "NL",
+                "NS",
+                "NT",
+                "NU",
+                "ON",
+                "PE",
+                "QC",
+                "SK",
+                "YT",
+                "Alberta",
+                "British Columbia",
+                "Manitoba",
+                "New Brunswick", 
+                "Newfoundland and Labrador",
+                "Nova Scotia",
+                "Northwest Territories",
+                "Nunavut",
+                "Ontario",
+                "Prince Edward Island",
+                "Quebec",
+                "Saskatchewan",
+                "Yukon"
+              ]]
+        }
+    },
+    addrPostal: {
+        type: Sequelize.STRING,
+        validate: {
+            is: /^[ABCEGHJKLMNPRSTVXY]\d[ABCEGHJKLMNPRSTVXY](?:\s?)\d[ABCEGHJKLMNPRSTVXY]\d$/i
+        }
+    },
     isManager: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
@@ -84,7 +136,7 @@ exports.EmpFields = EmpFields;
 // Sync the table schema with the database
 exports.initialize = function initialize() {
     return new Promise ((resolve, reject) => {
-        sequelize.sync()
+        sequelize.sync({alter: true}) // update table if columns, etc changes, but does not drop table
         .then(()=>{
             console.log("Sync successful.");
             resolve();
