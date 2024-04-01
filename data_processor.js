@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const Sequelize = require('sequelize');
+const bcrypt = require('bcryptjs');
 
 const sequelize = new Sequelize(
     process.env.DB_NAME, 
@@ -98,6 +99,14 @@ exports.initialize = function initialize() {
 // Add a single employee
 exports.addOneEmployee = function addOneEmployee(empData) {
     return new Promise ((resolve, reject) => {
+
+        // Hash the password
+        bcrypt.hash(empData.password, 10).then(hash => {
+            empData.password = hash;
+        })
+        .catch(err => {
+            console.log(err);
+        })
 
         // Casting to fields to appropriate type
         if (typeof(empData.empManagerID) === 'string'){
