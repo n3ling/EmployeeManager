@@ -27,13 +27,13 @@ describe('CRUD Tests', () => {
           .send({
             givenName: "Tester",
             surname: "Fellow",
-            email: "tester@email.com",
+            email: "unique-tester@email.com",
             password: "123abc",
             SIN: "654321",
             addrStreet: "123 Tester Street",
             addrCity: "Toronto",
             addrProv: "ON",
-            addrPostal: "1b1b1b",
+            addrPostal: "B1B1B1",
             status: "Active",
             department: 2,
             hireDate: "2024-03-22"
@@ -41,10 +41,91 @@ describe('CRUD Tests', () => {
           const successResponse = JSON.parse(res.text);
           console.log(successResponse)
           expect(successResponse).toEqual({ msg: "New user added." });
-    //     expect(successResponse[successResponse.length-1].givenName).toBe('Tester');
-    //     expect(successResponse[successResponse.length-1].surname).toBe('Fellow');
-    //     expect(successResponse[successResponse.length-1].email).toBe('tester@email.com');
       },10000);
+      test('post failed, unique constraint error', async () => {
+        const res = await request(app)
+          .post('/employees/add')
+          .send({
+            givenName: "Tester",
+            surname: "Fellow",
+            email: "tester@email.com",
+            password: "123abc",
+            SIN: "654321",
+            addrStreet: "123 Tester Street",
+            addrCity: "Toronto",
+            addrProv: "ON",
+            addrPostal: "B1B1B1",
+            status: "Active",
+            department: 2,
+            hireDate: "2024-03-22"
+          });
+          const successResponse = JSON.parse(res.text);
+          console.log(successResponse)
+          expect(successResponse).toEqual({ msg: "Failed to create Employee record for Fellow, Tester: SequelizeUniqueConstraintError: Validation error" });
+      },10000);
+    test('post attempt with postal code validation error', async () => {
+        const res = await request(app)
+        .post('/employees/add')
+        .send({
+          givenName: "invalid",
+          surname: "invalid",
+          email: "invalid@email.com",
+          password: "123abc",
+          SIN: "654321",
+          addrStreet: "123 Tester Street",
+          addrCity: "Toronto",
+          addrProv: "ON",
+          addrPostal: "invalid",
+          status: "Active",
+          department: 2,
+          hireDate: "2024-03-22"
+        });
+        const successResponse = JSON.parse(res.text);
+        console.log(successResponse)
+        expect(successResponse).toEqual({ msg: "Failed to create Employee record for invalid, invalid: SequelizeValidationError: Validation error: Validation is on addrPostal failed" });
+    })
+    test('post attempt with city validation error', async () => {
+        const res = await request(app)
+        .post('/employees/add')
+        .send({
+          givenName: "invalid",
+          surname: "invalid",
+          email: "invalid@email.com",
+          password: "123abc",
+          SIN: "654321",
+          addrStreet: "123 Tester Street",
+          addrCity: "12345",
+          addrProv: "ON",
+          addrPostal: "B1B1B1",
+          status: "Active",
+          department: 2,
+          hireDate: "2024-03-22"
+        });
+        const successResponse = JSON.parse(res.text);
+        console.log(successResponse)
+        expect(successResponse).toEqual({ msg: "Failed to create Employee record for invalid, invalid: SequelizeValidationError: Validation error: Validation is on addrCity failed" });
+    })
+    test('post attempt with province validation error', async () => {
+        const res = await request(app)
+        .post('/employees/add')
+        .send({
+          givenName: "invalid",
+          surname: "invalid",
+          email: "invalid@email.com",
+          password: "123abc",
+          SIN: "654321",
+          addrStreet: "123 Tester Street",
+          addrCity: "Toronto",
+          addrProv: "invalid",
+          addrPostal: "B1B1B1",
+          status: "Active",
+          department: 2,
+          hireDate: "2024-03-22"
+        });
+        const successResponse = JSON.parse(res.text);
+        console.log(successResponse)
+        expect(successResponse).toEqual({ msg: "Failed to create Employee record for invalid, invalid: SequelizeValidationError: Validation error: Validation isIn on addrProv failed" });
+    })
     test('update test should update employee', async () => {
         const resGet = await request(app).get('/employees');
         const successResponse = JSON.parse(resGet.text);
@@ -60,7 +141,7 @@ describe('CRUD Tests', () => {
             addrStreet: "123 Tester Street",
             addrCity: "Toronto",
             addrProv: "ON",
-            addrPostal: "1b1b1b",
+            addrPostal: "A2A2A2",
             status: "Active",
             department: 2,
             hireDate: "2024-03-22"
@@ -70,9 +151,31 @@ describe('CRUD Tests', () => {
             .send(updatedEmployee);
         console.log(res.body)
         expect(res.body).toEqual({msg: "User updated."});
-    //     expect(res.body[successResponse.length-1].givenName).toBe('Updated');
-    //     expect(res.body[successResponse.length-1].email).toBe('updated@email.com');
     },10000)
+    test('update attempt with validation error', async () => {
+        const resGet = await request(app).get('/employees');
+        const successResponse = JSON.parse(resGet.text);        
+        const updatedEmployee = {
+            employeeID: successResponse[successResponse.length-1].employeeID,
+            givenName: "invalid",
+            surname: "invalid",
+            email: "invalid@email.com",
+            password: "123abc",
+            SIN: "654321",
+            addrStreet: "123 Tester Street",
+            addrCity: "Toronto",
+            addrProv: "ON",
+            addrPostal: "invalid",
+            status: "Active",
+            department: 2,
+            hireDate: "2024-03-22"
+        }
+        const res = await request(app)
+            .post(`/employees/update`)
+            .send(updatedEmployee);
+        console.log(res.body)
+        expect(res.body).toEqual({msg: "Failed to update the record for invalid, invalid: SequelizeValidationError: Validation error: Validation is on addrPostal failed"});
+    })
     test('delete test should delete employee given id', async () => {
         const resGet = await request(app).get('/employees');
         const successResponse = JSON.parse(resGet.text);
