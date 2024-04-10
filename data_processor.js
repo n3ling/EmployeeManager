@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const Sequelize = require('sequelize');
+const bcrypt = require('bcryptjs');
 
 const sequelize = new Sequelize(
     process.env.DB_NAME, 
@@ -48,13 +49,65 @@ var Employee = sequelize.define('Employee', {
         type: Sequelize.STRING,
         allowNull: false
     },
-    email: Sequelize.STRING,
-    password: Sequelize.STRING,
+    email: {
+        type: Sequelize.STRING,
+        unique: true,
+        allowNull: false,
+        validate: {
+            is: /^[a-zA-Z0-9](?=.*@[a-zA-Z]+\.).*[a-zA-Z0-9]$/i
+        }
+    },
+    password: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
     SIN: Sequelize.STRING,
     addrStreet: Sequelize.STRING,
-    addrCity: Sequelize.STRING,
-    addrProv: Sequelize.STRING,
-    addrPostal: Sequelize.STRING,
+    addrCity: {
+        type: Sequelize.STRING,
+        validate: {
+            is: /[a-zA-Z]+/i
+        }
+    },
+    addrProv: {
+        type: Sequelize.STRING,
+        validate: {
+            isIn: [[
+                "AB",
+                "BC",
+                "MB", 
+                "NB",
+                "NL",
+                "NS",
+                "NT",
+                "NU",
+                "ON",
+                "PE",
+                "QC",
+                "SK",
+                "YT",
+                "Alberta",
+                "British Columbia",
+                "Manitoba",
+                "New Brunswick", 
+                "Newfoundland and Labrador",
+                "Nova Scotia",
+                "Northwest Territories",
+                "Nunavut",
+                "Ontario",
+                "Prince Edward Island",
+                "Quebec",
+                "Saskatchewan",
+                "Yukon"
+              ]]
+        }
+    },
+    addrPostal: {
+        type: Sequelize.STRING,
+        validate: {
+            is: /^[ABCEGHJKLMNPRSTVXY]\d[ABCEGHJKLMNPRSTVXY](?:\s?)\d[ABCEGHJKLMNPRSTVXY]\d$/i
+        }
+    },
     isManager: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
@@ -83,7 +136,7 @@ exports.EmpFields = EmpFields;
 // Sync the table schema with the database
 exports.initialize = function initialize() {
     return new Promise ((resolve, reject) => {
-        sequelize.sync()
+        sequelize.sync({alter: true}) // update table if columns, etc changes, but does not drop table
         .then(()=>{
             console.log("Sync successful.");
             resolve();
@@ -99,21 +152,30 @@ exports.initialize = function initialize() {
 exports.addOneEmployee = function addOneEmployee(empData) {
     return new Promise ((resolve, reject) => {
 
-        // Casting to fields to appropriate type
-        if (typeof(empData.empManagerID) === 'string'){
-            empData.empManagerID = parseInt(empData.empManagerID);
-        }
-        if (typeof(empData.hireDate) === 'string'){
-            empData.hireDate = Date.parse(empData.hireDate);
-        }
+        // Hash the password
+        bcrypt.hash(empData.password, 10).then(hash => {
+            empData.password = hash;
 
-        Employee.create(empData)
-        .then((emp) => {
-            console.log(`Record for ${emp.surname}, ${emp.givenName} successfully created.`);
-            resolve();
+            // Casting to fields to appropriate type
+            if (typeof(empData.empManagerID) === 'string'){
+                empData.empManagerID = parseInt(empData.empManagerID);
+            }
+            if (typeof(empData.hireDate) === 'string'){
+                empData.hireDate = Date.parse(empData.hireDate);
+            }   
+
+            Employee.create(empData)
+            .then((emp) => {
+                console.log(`Record for ${emp.surname}, ${emp.givenName} successfully created.`);
+                resolve();
+            })
+            .catch((err) => {
+                console.log(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+                reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+            });
         })
-        .catch((err) => {
-            console.log(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+        .catch(err => {
+            console.log(err);
             reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
         });
     });
