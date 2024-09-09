@@ -1,3 +1,5 @@
+//This file defines the Employee schema and it's CRUD operations
+
 require('dotenv').config();
 
 const Sequelize = require('sequelize');
