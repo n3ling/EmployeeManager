@@ -4,6 +4,7 @@ const app = express();
 const HTTP_PORT = process.env.DB_PORT || 8080;
 const dataProcessor = require("./data_processor.js");
 const employeeProfile = require("./modules/employeeProfile.js");
+const shiftScheduler = require("./modules/shiftScheduling.js");
 const sequelize = require("sequelize");
 const path = require("path");
 const cors = require("cors");
@@ -152,6 +153,73 @@ app.delete("/employees/delete/:empID", (req, res) => {
         res.status(400).json({msg: err});
     })
 });
+
+
+//-------SHIFT SCHEDULING ROUTES-------
+
+app.post("/shift/add", (req, res) => {
+    shiftScheduler.addOneShift(req.body)
+    .then(() => {
+        res.status(200).json({msg: "New user added."});
+    })
+    .catch((err) => {
+        console.log({message: err});
+        res.status(400).json({msg: err});
+    });
+});
+
+// app.get("/shift", (req, res) => {
+//     // No queries, get all employees
+//     if (!Object.keys(req.query).length){
+//         employeeProfile.getAllEmployees()
+//         .then((allEmp) => {
+//             res.type('json');
+//             res.setHeader('Content-Type', 'application/json');
+//             res.status(200).json(allEmp);
+//         })
+//         .catch((err) => {
+//             console.log({message: err});
+//             res.json({message: err});
+//         })
+//     }
+//     // Queries provided, filtering search by field and value
+//     else {
+//         let searchField = Object.keys(req.query)[0];
+//         let searchVal = Object.values(req.query)[0];
+//         employeeProfile.getEmployeesByField(searchField, searchVal)
+//         .then((matchedEmp) => {
+//             res.type('json');
+//             res.setHeader('Content-Type', 'application/json');
+//             res.status(200).json(matchedEmp);
+//         })
+//         .catch((err) => {
+//             console.log({message: err});
+//             res.json({message: err});
+//         })
+//     }
+// })
+
+// app.post("/shift/update", (req, res) => {
+//     employeeProfile.updateOneEmployee(req.body)
+//     .then(() => {
+//         res.status(200).json({msg: "User updated."});
+//     })
+//     .catch((err) => {
+//         console.log({message: err});
+//         res.status(400).json({msg: err});
+//     });
+// })
+
+// app.delete("/shift/delete/:empID", (req, res) => {
+//     employeeProfile.deleteEmployeeByID(req.params.empID)
+//     .then(() => {
+//         res.status(200).json({msg: "User deleted."});
+//     })
+//     .catch((err) => {
+//         console.log({message: err});
+//         res.status(400).json({msg: err});
+//     })
+// });
 
 
 //-------SERVER OPERATION-------

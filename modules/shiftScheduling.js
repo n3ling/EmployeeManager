@@ -1,144 +1,132 @@
-//This file defines the schema and it's CRUD operations for the Employee Profile module
+//This file defines the schema and it's CRUD operations for the Shift Scheduling module
 
 require('dotenv').config();
 
 const dataProcessor = require("../data_processor.js");
 const Sequelize = require('sequelize');
-const bcrypt = require('bcryptjs');
 
 //-------DATA MODELS-------
 
-// Employee data model
-var Employee = dataProcessor.sequelize.define('Employee', {
-    employeeID: {
+// Shift data model
+var Shift = dataProcessor.sequelize.define('Shift', {
+    shiftID: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    givenName: {
-        type: Sequelize.STRING,
+    shiftDate: {
+        type: Sequelize.DATEONLY,
         allowNull: false
     },
-    surname: {
-        type: Sequelize.STRING,
+    startTime: {
+        type: Sequelize.TIME,
         allowNull: false
     },
-    email: {
-        type: Sequelize.STRING,
-        unique: true,
-        allowNull: false,
-        validate: {
-            is: /^[a-zA-Z0-9](?=.*@[a-zA-Z]+\.).*[a-zA-Z0-9]$/i
-        }
-    },
-    password: {
-        type: Sequelize.STRING,
+    endTime: {
+        type: Sequelize.TIME,
         allowNull: false
     },
-    SIN: Sequelize.STRING,
-    addrStreet: Sequelize.STRING,
-    addrCity: {
-        type: Sequelize.STRING,
-        validate: {
-            is: /[a-zA-Z]+/i
-        }
-    },
-    addrProv: {
-        type: Sequelize.STRING,
-        validate: {
-            isIn: [[
-                "AB",
-                "BC",
-                "MB", 
-                "NB",
-                "NL",
-                "NS",
-                "NT",
-                "NU",
-                "ON",
-                "PE",
-                "QC",
-                "SK",
-                "YT",
-                "Alberta",
-                "British Columbia",
-                "Manitoba",
-                "New Brunswick", 
-                "Newfoundland and Labrador",
-                "Nova Scotia",
-                "Northwest Territories",
-                "Nunavut",
-                "Ontario",
-                "Prince Edward Island",
-                "Quebec",
-                "Saskatchewan",
-                "Yukon"
-              ]]
-        }
-    },
-    addrPostal: {
-        type: Sequelize.STRING,
-        validate: {
-            is: /^[ABCEGHJKLMNPRSTVXY]\d[ABCEGHJKLMNPRSTVXY](?:\s?)\d[ABCEGHJKLMNPRSTVXY]\d$/i
-        }
-    },
-    isManager: {
+    isHoliday: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
+        allowNull: false
     },
-    empManagerID: Sequelize.INTEGER,
-    status: {
-        type: Sequelize.ENUM('Active', 'Inactive')
-    },
-    department: Sequelize.INTEGER,
-    hireDate: Sequelize.DATEONLY,
 });
 
 // Enum object for valid fields in all lowercase
-const EmpFields = [
-    'givenname',  'surname',
-    'email',      'addrcity',
-    'addrprov',   'addrpostal',
-    'ismanager',  'status',
-    'department'
+const ShiftFields = [
+    'shiftDate', 'startTime',
+    'endTime', 'isHoliday'
   ]
-exports.EmpFields = EmpFields;
+exports.ShiftFields = ShiftFields;
+
+
+//-------HELPER FUNCTIONS-------
+// Checks if the shift time is a valid time
+function isValidShiftTime(shiftTime){
+
+    shiftHours = Number(shiftTime.split(":")[0]);
+    shiftMinutes = Number(shiftTime.split(":")[1]);
+
+    if (shiftHours < 0 || shiftHours > 23)
+        return false
+    if (shiftMinutes != 0 && shiftMinutes != 15 && shiftMinutes != 30 && shiftMinutes != 45)
+        return false
+    
+    return true;
+};
+
+// Checks if the shift end time is after the shift start time
+// Returns [T/F (bool), errMsg (str)]
+function isEndAfterStart(shiftData){
+    if (!isValidShiftTime(shiftData.startTime))
+        return [false, "Start time not within 24 hours of a day or minutes not in 15 minutes interval."]
+    if (!isValidShiftTime(shiftData.endTime))
+        return [false, "End time not within 24 hours of a day or minutes not in 15 minutes interval."]
+    if (shiftData.endTime <= shiftData.startTime)
+        return [false, "End time must be after start time."]
+    return [true, "Shift times are valid."]
+};
 
 
 //-------CRUD OPERATIONS-------
-// Add a single employee
-exports.addOneEmployee = function addOneEmployee(empData) {
+// Add a single shift
+exports.addOneShift = function addOneShift(shiftData) {
     return new Promise ((resolve, reject) => {
 
-        // Hash the password
-        bcrypt.hash(empData.password, 10).then(hash => {
-            empData.password = hash;
-
+        // confirm that the shift times' minutes are only in :00, :15, :30, :45
+        isShiftTimeValid = isEndAfterStart(shiftData);
+        console.log(isShiftTimeValid);
+        if (isShiftTimeValid[0]){
+            
             // Casting to fields to appropriate type
-            if (typeof(empData.empManagerID) === 'string'){
-                empData.empManagerID = parseInt(empData.empManagerID);
-            }
-            if (typeof(empData.hireDate) === 'string'){
-                empData.hireDate = Date.parse(empData.hireDate);
+            if (typeof(shiftData.shiftDate) === 'string'){
+                shiftData.shiftDate = Date.parse(shiftData.shiftDate);
             }   
 
-            Employee.create(empData)
-            .then((emp) => {
-                console.log(`Record for ${emp.surname}, ${emp.givenName} successfully created.`);
+            Shift.create(shiftData)
+            .then((shift) => {
+                console.log(`Record for shift on ${shift.shiftDate} successfully created.`);
                 resolve();
             })
             .catch((err) => {
-                console.log(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
-                reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+                console.log(`Failed to create shift on ${shiftData.shiftDate}: ${err}`);
+                reject(`Failed to create shift due to: ${err}`);
             });
-        })
-        .catch(err => {
-            console.log(err);
-            reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
-        });
+        }
+        else {
+            reject(`Failed to create shift due to: ${isShiftTimeValid[1]}`);
+        }
+        // bcrypt.hash(empData.password, 10).then(hash => {
+        //     empData.password = hash;
+
+        //     // Casting to fields to appropriate type
+        //     if (typeof(empData.empManagerID) === 'string'){
+        //         empData.empManagerID = parseInt(empData.empManagerID);
+        //     }
+        //     if (typeof(empData.hireDate) === 'string'){
+        //         empData.hireDate = Date.parse(empData.hireDate);
+        //     }   
+
+        //     Employee.create(empData)
+        //     .then((emp) => {
+        //         console.log(`Record for ${emp.surname}, ${emp.givenName} successfully created.`);
+        //         resolve();
+        //     })
+        //     .catch((err) => {
+        //         console.log(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+        //         reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+        //     });
+        // })
+        // .catch(err => {
+        //     console.log(err);
+        //     reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
+        // });
     });
 };
 
+
+// TODO: all below
 // Retrieve all employees
 exports.getAllEmployees = function getAllEmployees() {
     return new Promise ((resolve, reject) => {
