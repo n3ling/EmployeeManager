@@ -87,7 +87,7 @@ exports.addOneShift = function addOneShift(shiftData) {
             Shift.create(shiftData)
             .then((shift) => {
                 console.log(`Record for shift on ${shift.shiftDate} successfully created.`);
-                resolve();
+                resolve(shift);
             })
             .catch((err) => {
                 console.log(`Failed to create shift on ${shiftData.shiftDate}: ${err}`);
@@ -97,42 +97,15 @@ exports.addOneShift = function addOneShift(shiftData) {
         else {
             reject(`Failed to create shift due to: ${isShiftTimeValid[1]}`);
         }
-        // bcrypt.hash(empData.password, 10).then(hash => {
-        //     empData.password = hash;
-
-        //     // Casting to fields to appropriate type
-        //     if (typeof(empData.empManagerID) === 'string'){
-        //         empData.empManagerID = parseInt(empData.empManagerID);
-        //     }
-        //     if (typeof(empData.hireDate) === 'string'){
-        //         empData.hireDate = Date.parse(empData.hireDate);
-        //     }   
-
-        //     Employee.create(empData)
-        //     .then((emp) => {
-        //         console.log(`Record for ${emp.surname}, ${emp.givenName} successfully created.`);
-        //         resolve();
-        //     })
-        //     .catch((err) => {
-        //         console.log(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
-        //         reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
-        //     });
-        // })
-        // .catch(err => {
-        //     console.log(err);
-        //     reject(`Failed to create ${Employee.name} record for ${empData.surname}, ${empData.givenName}: ${err}`);
-        // });
     });
 };
 
-
-// TODO: all below
-// Retrieve all employees
-exports.getAllEmployees = function getAllEmployees() {
+// Retrieve all shifts
+exports.getAllShifts = function getAllShifts() {
     return new Promise ((resolve, reject) => {
-        Employee.findAll({raw: true, nest: true})
-        .then((allEmp) => {
-            resolve(allEmp);
+        Shift.findAll({raw: true, nest: true})
+        .then((allShifts) => {
+            resolve(allShifts);
         })
         .catch((err) => {
             reject('No results returned: ' + err);
@@ -140,8 +113,8 @@ exports.getAllEmployees = function getAllEmployees() {
     });
 };
 
-// Retrieve a list of employees with the matching status
-exports.getEmployeesByField = function getEmployeesByField(field, val) {
+// Retrieve a list of shifts with the matching status
+exports.getShiftsByField = function getShiftsByField(field, val) {
     if (typeof(field) != "string") {
         field = String(field);
     }    
@@ -152,77 +125,64 @@ exports.getEmployeesByField = function getEmployeesByField(field, val) {
     }
     
     return new Promise ((resolve, reject) => {
-        Employee.findAll({
+        Shift.findAll({
             where: {[field]: val},
             raw: true,
             nest: true
         })
-        .then((matchedEmployees) => {
-            resolve(matchedEmployees);
+        .then((matchedShift) => {
+            resolve(matchedShift);
         })
         .catch((error) => {
-            reject(`No employees with ${field}: ${val}: ` + error);
+            reject(`No shifts with ${field}: ${val}: ` + error);
         });
     });
 
 };
 
-// Update the employee with the matching employee ID
-exports.updateOneEmployee = function updateOneEmployee(empData) {
+// Update the shift with the matching shift ID
+exports.updateOneShift = function updateOneShift(shiftData) {
     return new Promise ((resolve, reject) => {
         // Casting to fields to appropriate type
-        if (typeof(empData.empManagerID) === 'string'){
-            empData.empManagerID = parseInt(empData.empManagerID);
+        if (typeof(shiftData.shiftID) === 'string'){
+            shiftData.shiftID = parseInt(shiftData.shiftID);
         }
-        if (typeof(empData.hireDate) === 'string'){
-            empData.hireDate = Date.parse(empData.hireDate);
+        if (typeof(shiftData.shiftDate) === 'string'){
+            shiftData.shiftDate = Date.parse(shiftData.shiftDate);
         }
 
-        // TODO: Validation for status
-
-        Employee.update({
-            employeeID: empData.employeeID,
-            givenName: empData.givenName,
-            surname: empData.surname,
-            email: empData.email,
-            password: empData.password,
-            SIN: empData.SIN,
-            addrStreet: empData.addrStreet,
-            addrCity: empData.addrCity,
-            addrProv: empData.addrProv,
-            addrPostal: empData.addrPostal,
-            isManager: empData.isManager,
-            empManagerID: empData.empManagerID,
-            status: empData.status,
-            department: empData.department,
-            hireDate: empData.hireDate,
+        Shift.update({
+            shiftDate: shiftData.shiftDate,
+            startTime: shiftData.startTime,
+            endTime: shiftData.endTime,
+            isHoliday: shiftData.isHoliday,
         }, {
-            where: {employeeID: empData.employeeID}
+            where: {shiftID: shiftData.shiftID}
         })
-        .then(() => {
-            console.log(`Record for ${empData.surname}, ${empData.givenName} updated.`);
-            resolve();
+        .then((shift) => {
+            console.log(`Record for shift on ${shift.shiftDate} successfully updated.`);
+            resolve(shift);
         })
         .catch((err) => {
-            console.log(`Failed to update the record for ${empData.surname}, ${empData.givenName}: ${err}`);
-            reject(`Failed to update the record for ${empData.surname}, ${empData.givenName}: ${err}`);
+            console.log(`Failed to create shift on ${shiftData.shiftDate}: ${err}`);
+            reject(`Failed to update shift due to: ${err}`);
         });
     })
 }
 
 // Delete the employee with the matching employee ID
-exports.deleteEmployeeByID = function deleteEmployeeByID(empID) {
+exports.deleteShiftByID = function deleteShiftByID(recievedShiftID) {
     return new Promise ((resolve, reject) => {
-        Employee.destroy({
-            where: {employeeID: empID}
+        Shift.destroy({
+            where: {shiftID: recievedShiftID}
         })
         .then(() => {
-            console.log(`Employee #${empID} deleted.`);
+            console.log(`Shift #${recievedShiftID} deleted.`);
             resolve();
         })
         .catch((err) => {
-            console.log(`Failed to delete employee #${empID}: ${err}`);
-            reject(`Failed to delete employee #${empID}: ${err}`);
+            console.log(`Failed to delete shift #${recievedShiftID}: ${err}`);
+            reject(`Failed to delete shift #${recievedShiftID}: ${err}`);
         });
     });
 };

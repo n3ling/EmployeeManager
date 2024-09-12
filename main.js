@@ -160,7 +160,7 @@ app.delete("/employees/delete/:empID", (req, res) => {
 app.post("/shift/add", (req, res) => {
     shiftScheduler.addOneShift(req.body)
     .then(() => {
-        res.status(200).json({msg: "New user added."});
+        res.status(200).json({msg: "New shift added."});
     })
     .catch((err) => {
         console.log({message: err});
@@ -168,58 +168,58 @@ app.post("/shift/add", (req, res) => {
     });
 });
 
-// app.get("/shift", (req, res) => {
-//     // No queries, get all employees
-//     if (!Object.keys(req.query).length){
-//         employeeProfile.getAllEmployees()
-//         .then((allEmp) => {
-//             res.type('json');
-//             res.setHeader('Content-Type', 'application/json');
-//             res.status(200).json(allEmp);
-//         })
-//         .catch((err) => {
-//             console.log({message: err});
-//             res.json({message: err});
-//         })
-//     }
-//     // Queries provided, filtering search by field and value
-//     else {
-//         let searchField = Object.keys(req.query)[0];
-//         let searchVal = Object.values(req.query)[0];
-//         employeeProfile.getEmployeesByField(searchField, searchVal)
-//         .then((matchedEmp) => {
-//             res.type('json');
-//             res.setHeader('Content-Type', 'application/json');
-//             res.status(200).json(matchedEmp);
-//         })
-//         .catch((err) => {
-//             console.log({message: err});
-//             res.json({message: err});
-//         })
-//     }
-// })
+app.get("/shift", (req, res) => {
+    // No queries, get all shifts
+    if (!Object.keys(req.query).length){
+        shiftScheduler.getAllShifts()
+        .then((allShifts) => {
+            res.type('json');
+            res.setHeader('Content-Type', 'application/json');
+            res.status(200).json(allShifts);
+        })
+        .catch((err) => {
+            console.log({message: err});
+            res.json({message: err});
+        })
+    }
+    // Queries provided, filtering search by field and value
+    else {
+        let searchField = Object.keys(req.query)[0];
+        let searchVal = Object.values(req.query)[0];
+        shiftScheduler.getShiftsByField(searchField, searchVal)
+        .then((matchedShift) => {
+            res.type('json');
+            res.setHeader('Content-Type', 'application/json');
+            res.status(200).json(matchedShift);
+        })
+        .catch((err) => {
+            console.log({message: err});
+            res.json({message: err});
+        })
+    }
+})
 
-// app.post("/shift/update", (req, res) => {
-//     employeeProfile.updateOneEmployee(req.body)
-//     .then(() => {
-//         res.status(200).json({msg: "User updated."});
-//     })
-//     .catch((err) => {
-//         console.log({message: err});
-//         res.status(400).json({msg: err});
-//     });
-// })
+app.post("/shift/update", (req, res) => {
+    shiftScheduler.updateOneShift(req.body)
+    .then(() => {
+        res.status(200).json({msg: "Shift updated."});
+    })
+    .catch((err) => {
+        console.log({message: err});
+        res.status(400).json({msg: err});
+    });
+})
 
-// app.delete("/shift/delete/:empID", (req, res) => {
-//     employeeProfile.deleteEmployeeByID(req.params.empID)
-//     .then(() => {
-//         res.status(200).json({msg: "User deleted."});
-//     })
-//     .catch((err) => {
-//         console.log({message: err});
-//         res.status(400).json({msg: err});
-//     })
-// });
+app.delete("/shift/delete/:shiftID", (req, res) => {
+    shiftScheduler.deleteShiftByID(req.params.shiftID)
+    .then(() => {
+        res.status(200).json({msg: "Shift deleted."});
+    })
+    .catch((err) => {
+        console.log({message: err});
+        res.status(400).json({msg: err});
+    })
+});
 
 
 //-------SERVER OPERATION-------
