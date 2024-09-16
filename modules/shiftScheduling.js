@@ -74,15 +74,15 @@ function isEndAfterStart(shiftData){
 exports.addOneShift = function addOneShift(shiftData) {
     return new Promise ((resolve, reject) => {
 
-        // confirm that the shift times' minutes are only in :00, :15, :30, :45
+        // confirm that the shift times' are valid
         isShiftTimeValid = isEndAfterStart(shiftData);
         console.log(isShiftTimeValid);
         if (isShiftTimeValid[0]){
             
             // Casting to fields to appropriate type
-            if (typeof(shiftData.shiftDate) === 'string'){
-                shiftData.shiftDate = Date.parse(shiftData.shiftDate);
-            }   
+            // if (typeof(shiftData.shiftDate) === 'string'){
+            //     shiftData.shiftDate = Date.parse(shiftData.shiftDate);
+            // }
 
             Shift.create(shiftData)
             .then((shift) => {
@@ -147,26 +147,34 @@ exports.updateOneShift = function updateOneShift(shiftData) {
         if (typeof(shiftData.shiftID) === 'string'){
             shiftData.shiftID = parseInt(shiftData.shiftID);
         }
-        if (typeof(shiftData.shiftDate) === 'string'){
-            shiftData.shiftDate = Date.parse(shiftData.shiftDate);
-        }
+        // if (typeof(shiftData.shiftDate) === 'string'){
+        //     shiftData.shiftDate = Date.parse(shiftData.shiftDate);
+        // }
 
-        Shift.update({
-            shiftDate: shiftData.shiftDate,
-            startTime: shiftData.startTime,
-            endTime: shiftData.endTime,
-            isHoliday: shiftData.isHoliday,
-        }, {
-            where: {shiftID: shiftData.shiftID}
-        })
-        .then((shift) => {
-            console.log(`Record for shift on ${shift.shiftDate} successfully updated.`);
-            resolve(shift);
-        })
-        .catch((err) => {
-            console.log(`Failed to create shift on ${shiftData.shiftDate}: ${err}`);
-            reject(`Failed to update shift due to: ${err}`);
-        });
+        // confirm that the shift times' are valid
+        isShiftTimeValid = isEndAfterStart(shiftData);
+        console.log(isShiftTimeValid);
+        if (isShiftTimeValid[0]){
+            Shift.update({
+                shiftDate: shiftData.shiftDate,
+                startTime: shiftData.startTime,
+                endTime: shiftData.endTime,
+                isHoliday: shiftData.isHoliday,
+            }, {
+                where: {shiftID: shiftData.shiftID}
+            })
+            .then((shift) => {
+                console.log(`Record for shift on ${shift.shiftDate} successfully updated.`);
+                resolve(shift);
+            })
+            .catch((err) => {
+                console.log(`Failed to create shift on ${shiftData.shiftDate}: ${err}`);
+                reject(`Failed to update shift due to: ${err}`);
+            });
+        }
+        else {
+            reject(`Failed to create shift due to: ${isShiftTimeValid[1]}`);
+        }
     })
 }
 
