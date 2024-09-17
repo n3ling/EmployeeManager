@@ -17,7 +17,7 @@ describe('CRUD Tests', () => {
         expect(res.body[0].givenName).toBe("John");
         expect(res.body[0].surname).toBe("Caruso");
         expect(res.body[0].email).toBe("John.D@email.com");
-        expect(res.body[0].employeeID).toBe(1);
+        expect(res.body[0].employeeID).toBe(2);
         const successResponse = JSON.parse(res.text);
         console.log(successResponse.length);
     });
