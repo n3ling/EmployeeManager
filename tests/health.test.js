@@ -14,10 +14,10 @@ describe('CRUD Tests', () => {
     test('read test should return employee data', async () => {
         const res = await request(app).get('/employees');
         expect(res.statusCode).toBe(200);
-        expect(res.body[0].givenName).toBe("John");
-        expect(res.body[0].surname).toBe("Caruso");
-        expect(res.body[0].email).toBe("John.D@email.com");
-        expect(res.body[0].employeeID).toBe(2);
+        expect(res.body[1].givenName).toBe("John");
+        expect(res.body[1].surname).toBe("Caruso");
+        expect(res.body[1].email).toBe("John.D@email.com");
+        expect(res.body[1].employeeID).toBe(7);
         const successResponse = JSON.parse(res.text);
         console.log(successResponse.length);
     });
@@ -27,7 +27,7 @@ describe('CRUD Tests', () => {
           .send({
             givenName: "Tester",
             surname: "Fellow",
-            email: "unique-tester@email.com",
+            email: "tester@email.com",
             password: "123abc",
             SIN: "654321",
             addrStreet: "123 Tester Street",
@@ -48,7 +48,7 @@ describe('CRUD Tests', () => {
           .send({
             givenName: "Tester",
             surname: "Fellow",
-            email: "tester@email.com",
+            email: "unique-tester@email.com",
             password: "123abc",
             SIN: "654321",
             addrStreet: "123 Tester Street",
