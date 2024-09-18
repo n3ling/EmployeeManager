@@ -40,7 +40,7 @@ exports.sequelize = sequelize;
 // Sync the table schema with the database
 exports.initialize = function initialize() {
     return new Promise ((resolve, reject) => {
-        sequelize.sync({alter: true}) // update table if columns, etc changes, but does not drop table
+        sequelize.sync({alter: false}) // doesn't update table columns, since there is a limit of 64 updates
         .then(()=>{
             console.log("Sync successful.");
             resolve();
