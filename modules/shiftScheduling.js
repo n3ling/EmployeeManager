@@ -68,7 +68,6 @@ function isEndAfterStart(shiftData){
     return [true, "Shift times are valid."]
 };
 
-
 //-------CRUD OPERATIONS-------
 // Add a single shift
 exports.addOneShift = function addOneShift(shiftData) {
@@ -164,8 +163,18 @@ exports.updateOneShift = function updateOneShift(shiftData) {
                 where: {shiftID: shiftData.shiftID}
             })
             .then((shift) => {
-                console.log(`Record for shift on ${shift.shiftDate} successfully updated.`);
-                resolve(shift);
+                // Found matching shift
+                if (shift > 0){
+                    console.log(`Record for shift ID #${shiftData.shiftID} successfully updated.`);
+                    resolve(shiftData);
+                }
+                // No shifts with matching ID
+                else {
+                    err = `Shift with ID #${shiftData.shiftID} does not exist.`;
+                    console.log(err);
+                    reject(`Failed to update shift due to: ${err}`);
+                }
+                
             })
             .catch((err) => {
                 console.log(`Failed to create shift on ${shiftData.shiftDate}: ${err}`);
@@ -173,7 +182,7 @@ exports.updateOneShift = function updateOneShift(shiftData) {
             });
         }
         else {
-            reject(`Failed to create shift due to: ${isShiftTimeValid[1]}`);
+            reject(`Failed to update shift due to: ${isShiftTimeValid[1]}`);
         }
     })
 }
