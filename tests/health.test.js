@@ -281,6 +281,12 @@ describe('Shift Scheduling Tests', () => {
         expect(res.body[0].isHoliday).toBe(0);
     },10000);
 
+    test('get test for non-existing value should return empty', async () => {
+        const res = await request(app).get('/shift/?shiftID=0');
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual([]);
+    });
+
     test('update test should update shift', async () => {
         const resGet = await request(app).get('/shift');
         const successResponse = JSON.parse(resGet.text);
@@ -297,6 +303,16 @@ describe('Shift Scheduling Tests', () => {
             .send(updatedShift);
         expect(res.body).toEqual({msg: "Shift updated."});
     },10000);
+
+    test('update with incomplete record', async () => {
+        const invalidShift = {
+            shiftID: 0,
+        }
+        const res = await request(app)
+            .post('/shift/update')
+            .send(invalidShift);
+        expect(res.statusCode).toBe(400);
+    });
 
     test('delete test should delete a shift with given id', async () => {
         const resGet = await request(app).get('/shift');
