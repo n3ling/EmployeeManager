@@ -314,6 +314,20 @@ describe('Shift Scheduling Tests', () => {
         expect(res.statusCode).toBe(400);
     });
 
+    test('update non-existing record', async () => {
+        const nonExistingShift = {
+            shiftID: 0,
+            shiftDate: "2024-10-10",
+            startTime: "10:00:00",
+            endTime: "13:00:00"
+        }
+        const res = await request(app)
+            .post('/shift/update')
+            .send(nonExistingShift);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({msg: "Failed to update shift due to: Shift with ID #0 does not exist."})
+    })
+
     test('delete test should delete a shift with given id', async () => {
         const resGet = await request(app).get('/shift');
         const successResponse = JSON.parse(resGet.text);
