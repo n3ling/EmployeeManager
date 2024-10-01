@@ -103,6 +103,7 @@ const EmpFields = [
     'department'
   ]
 exports.EmpFields = EmpFields;
+exports.EmpModel = Employee;
 
 
 //-------CRUD OPERATIONS-------

@@ -4,8 +4,8 @@ require('dotenv').config();
 
 const dataProcessor = require("../data_processor.js");
 const Sequelize = require('sequelize');
-const employeeProfile = require("./modules/employeeProfile.js");
-const shiftScheduler = require("./modules/shiftScheduling.js");
+const employeeProfile = require("./employeeProfile.js");
+const shiftScheduler = require("./shiftScheduling.js");
 
 //-------DATA MODELS-------
 
@@ -20,7 +20,7 @@ var Attendance = dataProcessor.sequelize.define('Attendance', {
         type: Sequelize.INTEGER,
         allowNull: false
     },
-    employeeID: {
+    empID: {
         type: Sequelize.INTEGER,
         allowNull: false
     },
@@ -31,66 +31,109 @@ var Attendance = dataProcessor.sequelize.define('Attendance', {
     },
 });
 
+// Table associations
+Attendance.belongsTo(employeeProfile.EmpModel, {foreignKey: 'empID'});
+Attendance.belongsTo(shiftScheduler.ShiftModel, {foreignKey: 'shiftID'});
+
 // Enum object for valid fields in all lowercase
 const AttendanceFields = [
-    'shiftID', 'employeeID',
+    'shiftID', 'empID',
     'checkedIn'
   ]
 exports.AttendanceFields = AttendanceFields;
 
 
 //-------HELPER FUNCTIONS-------
-// Checks if the employee exists
-function employeeExist(empID){
-    let empFoundCount = employeeProfile.getEmployeesByField("empID", empID);
-
-    if (empFoundCount == 0)
-        return false
-    return true;
-};
-
-// Checks if the shift exists
-function shiftExist(shiftID){
-    let shiftsFoundCount = shiftScheduler.getShiftsByField("shiftID", shiftID);
-
-    if (shiftsFoundCount == 0)
-        return false
-    return true
-};
+// Gets all the shift information for attendances from a given employee
+function getAttendancesByEmpID(attendanceData){
+    // CHECK ONLY REMOVE AFTER
+    console.log(">>>>>>>>>>> in getAttendancesByEmpID()");
+    return new Promise ((resolve, reject) => {
+        Attendance.findAll({
+            where: {
+                ["empID"]: attendanceData.empID // only get attendances from the matching employee
+            },
+            include: [{ // joining shift table
+                model: shiftScheduler.ShiftModel,
+                attributes: [
+                    'shiftID', 'shiftDate', 'startTime', 'endTime', 'isHoliday'
+                ]
+            }],
+            raw: true,
+            nest: true
+        })
+        .then((matchedAttendances) => {
+            //CHECK ONLY REMOVE ATER
+            console.log(`--------getAttendancesByEmpID's matchedAttendances: ${matchedAttendances}`)
+            console.log(`--------getAttendancesByEmpID's matchedAttendances: ${JSON.stringify(matchedAttendances)}`)
+            resolve(matchedAttendances);
+        })
+        .catch((err) => {
+            reject('getAttendancesByEmpID catch: ' + err);
+        });
+    });
+}
 
 // Checks if the attendance is valid
 // Returns [T/F (bool), numErrors(int), errMsg (str)]
 function validAttendance(attendanceData){
+    // CHECK ONLY REMOVE AFTER
+    console.log(">>>>>>>>>>> in validAttendance()");
     let numErrors = 0; // number of errors preventing attendance from being created
     let rejReason = "Attendance cannot be created due to the following:";
     let matchedAttendances = []; // list of existing attendances for the employee
     let duplicateShift = false;
     let isValidAttendance = false;
 
-    // confirm that the employee and shift exist
-    if (!employeeExist(attendanceData.empID)){
-        numErrors += 1;
-        rejReason += "/nEmployee not found."
-    }
-    if (!shiftExist(attendanceData.shiftID)){
-        numErrors += 1;
-        rejReason += "/nShift not found."
-    }
+    return new Promise ((resolve, reject) => {
+        getAttendancesByEmpID(attendanceData)
+        .then((matchedAttendances) => {
+            //CHECK ONLY REMOVE ATER
+            console.log(`--------validA's matchedAttendances: ${matchedAttendances}`);
+            console.log(`========validA's matchedAttendances: ${matchedAttendances[0].shiftDate}`);
+            resolve(matchedAttendances);
+        })
+        .catch((err) => {
+            reject('validAttendance catch: ' + err);
+        });
+    });
 
-    // Checks if employee is already signed up for that shift
-    matchedAttendances = exports.getAttendancesByField("empID", attendanceData.empID);
-    duplicateShift = matchedAttendances.find(
-        existingAttendance => existingAttendance.shiftID == attendanceData.shiftID
-    );
-    if (duplicateShift){
-        numErrors += 1;
-        rejReason += "/nEmployee is already registered for this shift."
-    }
+    
 
-    if (!numErrors)
-        isValidAttendance = true;
+    // // confirm that the employee and shift exist
+    // employeeExist(attendanceData.empID)
+    // .then((matchedEmp) => {
+    //     matchedEmp.find()
+    // })
+    // if (!employeeExist(attendanceData.empID)){
+    //     // CHECK ONLY REMOVE AFTER
+    //     console.log("----got in !employeeExist");
 
-    return [isValidAttendance, numErrors, rejReason];
+    //     numErrors += 1;
+    //     rejReason += "/nEmployee not found."
+    // }
+    // if (!shiftExist(attendanceData.shiftID)){
+    //     // CHECK ONLY REMOVE AFTER
+    //     console.log("----got in !shiftExist");
+
+    //     numErrors += 1;
+    //     rejReason += "/nShift not found."
+    // }
+
+    // // Checks if employee is already signed up for that shift
+    // matchedAttendances = exports.getAttendancesByField("empID", attendanceData.empID);
+    // duplicateShift = matchedAttendances.findAll(
+    //     existingAttendance => existingAttendance.shiftID == attendanceData.shiftID
+    // );
+    // if (duplicateShift){
+    //     numErrors += 1;
+    //     rejReason += "/nEmployee is already registered for this shift."
+    // }
+
+    // if (!numErrors)
+    //     isValidAttendance = true;
+
+    // return [isValidAttendance, numErrors, rejReason];
 }
 
 //-------CRUD OPERATIONS-------
@@ -107,20 +150,30 @@ exports.addOneAttendance = function addOneAttendance(attendanceData) {
         attendanceData.shiftID = parseInt(attendanceData.shiftID);
     }
 
+    // CHECK ONLY REMOVE AFTER
+    console.log(`-----------attendanceData type: ${typeof(attendanceData)}`);
+    console.log(`-----------attendanceData: ${JSON.stringify(attendanceData)}`);
+
     return new Promise ((resolve, reject) => {
         let numErrors = 0; // number of errors preventing attendance from being created
         let rejReason = "";
         let attendanceValidation = []; // [T/F (bool), numErrors(int), errMsg (str)]
-        let isValidAttendance = false;        
+        let isValidAttendance = true; // DEFAULT FALSE      
 
         // Assigning results of validation to individual variables for clarity
-        attendanceValidation = validAttendance(attendanceData);
-        isValidAttendance = attendanceValidation[0];
-        numErrors = attendanceValidation[1];
-        rejReason = attendanceValidation[2];
+        // attendanceValidation = validAttendance(attendanceData);
+        // // isValidAttendance = attendanceValidation[0];
+        // // numErrors = attendanceValidation[1];
+        // // rejReason = attendanceValidation[2];
 
-        if (isValidAttendance){
-            Attendance.create(Attendance)
+        // console.log(`-----------attendanceValidation: ${attendanceValidation}`);
+
+        validAttendance(attendanceData)
+        .then((attendanceValidation) => {
+            //CHECK ONLY REMOVE ATER
+            console.log(`--------validA's matchedAttendances: ${attendanceValidation}`)
+
+            Attendance.create(attendanceData)
             .then((attendance) => {
                 console.log(`Record for attendance successfully created.`);
                 resolve(attendance);
@@ -129,10 +182,26 @@ exports.addOneAttendance = function addOneAttendance(attendanceData) {
                 console.log(`Failed to create attendance: ${err}`);
                 reject(`Failed to create attendance due to: ${err}`);
             });
-        }
-        else {
-            reject(`Failed to create attendance due ${numErrors} error(s) to: ${rejReason}`);
-        }
+        })
+        .catch((err) => {
+            reject('addOneAttendance catch: ' + err);
+        });
+
+
+        // if (isValidAttendance){
+        //     Attendance.create(attendanceData)
+        //     .then((attendance) => {
+        //         console.log(`Record for attendance successfully created.`);
+        //         resolve(attendance);
+        //     })
+        //     .catch((err) => {
+        //         console.log(`Failed to create attendance: ${err}`);
+        //         reject(`Failed to create attendance due to: ${err}`);
+        //     });
+        // }
+        // else {
+        //     reject(`Failed to create attendance due ${numErrors} error(s) to: ${rejReason}`);
+        // }
     });
 };
 
@@ -167,6 +236,8 @@ exports.getAttendancesByField = function getAttendancesByField(field, val) {
             nest: true
         })
         .then((matchedAttendances) => {
+            console.log(`-----------matchedAttendances type: ${typeof(matchedAttendances)}`);
+            console.log(`-----------matchedAttendances: ${matchedAttendances}`);
             resolve(matchedAttendances);
         })
         .catch((error) => {
