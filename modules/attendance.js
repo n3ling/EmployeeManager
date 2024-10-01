@@ -45,7 +45,7 @@ exports.AttendanceFields = AttendanceFields;
 
 //-------HELPER FUNCTIONS-------
 // Gets all the shift information for attendances from a given employee
-function getAttendancesByEmpID(attendanceData){
+function getAttendancesByEmpID(attendanceData, selectedShift){
     // CHECK ONLY REMOVE AFTER
     console.log(">>>>>>>>>>> in getAttendancesByEmpID()");
     return new Promise ((resolve, reject) => {
@@ -64,9 +64,13 @@ function getAttendancesByEmpID(attendanceData){
         })
         .then((matchedAttendances) => {
             //CHECK ONLY REMOVE ATER
-            console.log(`--------getAttendancesByEmpID's matchedAttendances: ${matchedAttendances}`)
-            console.log(`--------getAttendancesByEmpID's matchedAttendances: ${JSON.stringify(matchedAttendances)}`)
-            resolve(matchedAttendances);
+            // console.log(`--------getAttendancesByEmpID's matchedAttendances: ${matchedAttendances}`)
+            // console.log(`--------getAttendancesByEmpID's matchedAttendances: ${JSON.stringify(matchedAttendances)}`)
+            // console.log(`**------getAttendancesByEmpID's selectedShift: ${selectedShift}`)
+            // console.log(`**------getAttendancesByEmpID's selectedShift: ${JSON.stringify(selectedShift)}`)
+            
+            // [[array of attendances from matching employee], [array of shifts matching shiftID]]
+            resolve([matchedAttendances, selectedShift]);
         })
         .catch((err) => {
             reject('getAttendancesByEmpID catch: ' + err);
@@ -86,12 +90,44 @@ function validAttendance(attendanceData){
     let isValidAttendance = false;
 
     return new Promise ((resolve, reject) => {
-        getAttendancesByEmpID(attendanceData)
-        .then((matchedAttendances) => {
+        shiftScheduler.getShiftsByField("shiftID", attendanceData.shiftID)
+        .then((selectedShift) => {
+            return getAttendancesByEmpID(attendanceData, selectedShift)
+        })
+        .then((matchedAndSelectedAttendance) => {
+            // This is what matchedAndSelectedAttendance contains:
+            // matchedAndSelectedAttendance = [
+            //     [array of attendances from matching employee], 
+            //     [array of shifts matching shiftID]
+            // ]
             //CHECK ONLY REMOVE ATER
-            console.log(`--------validA's matchedAttendances: ${matchedAttendances}`);
-            console.log(`========validA's matchedAttendances: ${matchedAttendances[0].shiftDate}`);
-            resolve(matchedAttendances);
+            console.log(`--------validA's matchedAttendances: ${matchedAndSelectedAttendance[0]}`);
+            console.log(`========validA's matchedAttendances: ${matchedAndSelectedAttendance[0][0].Shift.shiftDate}`);
+            //console.log(`--------validA's selectedShift: ${matchedAndSelectedAttendance[1]}`);
+            //console.log(`========validA's selectedShift: ${JSON.stringify(matchedAndSelectedAttendance[1])}`);
+            
+            let matchedAttendances = matchedAndSelectedAttendance[0]
+            let selectedShift = matchedAndSelectedAttendance[1][0];
+
+            console.log(`--# of matches ${matchedAttendances.length}`);
+            console.log(`  &&======validA's selectedShift: ${JSON.stringify(selectedShift)}`);
+
+            let attendanceSameDay = matchedAttendances.filter(
+                attendance => attendance.Shift.shiftDate == selectedShift.shiftDate);
+
+            //CHECK ONLY REMOVE ATER
+            console.log(`--------validA's attendanceSameDay: ${JSON.stringify(attendanceSameDay)}`);
+
+            let hasOverlap = attendanceSameDay.some(
+                attendance => 
+                    attendance.Shift.startTime < selectedShift.endTime 
+                    && attendance.Shift.endTime > selectedShift.startTime
+            );
+
+            //CHECK ONLY REMOVE ATER
+            console.log(`  --------validA's hasOverlap: ${hasOverlap}`);
+
+            resolve(hasOverlap);
         })
         .catch((err) => {
             reject('validAttendance catch: ' + err);
@@ -172,6 +208,8 @@ exports.addOneAttendance = function addOneAttendance(attendanceData) {
         .then((attendanceValidation) => {
             //CHECK ONLY REMOVE ATER
             console.log(`--------validA's matchedAttendances: ${attendanceValidation}`)
+
+            // TODO: if else branch for attendanceVaidation
 
             Attendance.create(attendanceData)
             .then((attendance) => {
