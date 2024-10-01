@@ -254,20 +254,19 @@ exports.updateOneAttendance = function updateOneAttendance(attendanceData) {
     })
 }
 
-// TODO:
-// Delete the employee with the matching employee ID
-exports.deleteShiftByID = function deleteShiftByID(recievedShiftID) {
+// Delete the attendance with the matching attendance ID
+exports.deleteAttendanceByID = function deleteAttendanceByID(receivedAttendanceID) {
     return new Promise ((resolve, reject) => {
-        Shift.destroy({
-            where: {shiftID: recievedShiftID}
+        Attendance.destroy({
+            where: {attendanceID: receivedAttendanceID}
         })
         .then(() => {
-            console.log(`Shift #${recievedShiftID} deleted.`);
+            console.log(`Attendance #${receivedAttendanceID} deleted.`);
             resolve();
         })
         .catch((err) => {
-            console.log(`Failed to delete shift #${recievedShiftID}: ${err}`);
-            reject(`Failed to delete shift #${recievedShiftID}: ${err}`);
+            console.log(`Failed to delete attendance #${receivedAttendanceID}: ${err}`);
+            reject(`Failed to delete attendance #${receivedAttendanceID}: ${err}`);
         });
     });
 };
