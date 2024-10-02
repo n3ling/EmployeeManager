@@ -46,8 +46,6 @@ exports.AttendanceFields = AttendanceFields;
 //-------HELPER FUNCTIONS-------
 // Gets all the shift information for attendances from a given employee
 function getAttendancesByEmpID(attendanceData, selectedShift){
-    // CHECK ONLY REMOVE AFTER
-    console.log(">>>>>>>>>>> in getAttendancesByEmpID()");
     return new Promise ((resolve, reject) => {
         Attendance.findAll({
             where: {
@@ -63,12 +61,6 @@ function getAttendancesByEmpID(attendanceData, selectedShift){
             nest: true
         })
         .then((matchedAttendances) => {
-            //CHECK ONLY REMOVE ATER
-            // console.log(`--------getAttendancesByEmpID's matchedAttendances: ${matchedAttendances}`)
-            // console.log(`--------getAttendancesByEmpID's matchedAttendances: ${JSON.stringify(matchedAttendances)}`)
-            // console.log(`**------getAttendancesByEmpID's selectedShift: ${selectedShift}`)
-            // console.log(`**------getAttendancesByEmpID's selectedShift: ${JSON.stringify(selectedShift)}`)
-            
             // [[array of attendances from matching employee], [array of shifts matching shiftID]]
             resolve([matchedAttendances, selectedShift]);
         })
@@ -80,15 +72,7 @@ function getAttendancesByEmpID(attendanceData, selectedShift){
 
 // Checks if the attendance is valid
 // Returns [T/F (bool), numErrors(int), errMsg (str)]
-function validAttendance(attendanceData){
-    // CHECK ONLY REMOVE AFTER
-    console.log(">>>>>>>>>>> in validAttendance()");
-    let numErrors = 0; // number of errors preventing attendance from being created
-    let rejReason = "Attendance cannot be created due to the following:";
-    let matchedAttendances = []; // list of existing attendances for the employee
-    let duplicateShift = false;
-    let isValidAttendance = false;
-
+function hasOverlapShift(attendanceData){
     return new Promise ((resolve, reject) => {
         shiftScheduler.getShiftsByField("shiftID", attendanceData.shiftID)
         .then((selectedShift) => {
@@ -100,23 +84,12 @@ function validAttendance(attendanceData){
             //     [array of attendances from matching employee], 
             //     [array of shifts matching shiftID]
             // ]
-            //CHECK ONLY REMOVE ATER
-            console.log(`--------validA's matchedAttendances: ${matchedAndSelectedAttendance[0]}`);
-            console.log(`========validA's matchedAttendances: ${matchedAndSelectedAttendance[0][0].Shift.shiftDate}`);
-            //console.log(`--------validA's selectedShift: ${matchedAndSelectedAttendance[1]}`);
-            //console.log(`========validA's selectedShift: ${JSON.stringify(matchedAndSelectedAttendance[1])}`);
             
             let matchedAttendances = matchedAndSelectedAttendance[0]
             let selectedShift = matchedAndSelectedAttendance[1][0];
 
-            console.log(`--# of matches ${matchedAttendances.length}`);
-            console.log(`  &&======validA's selectedShift: ${JSON.stringify(selectedShift)}`);
-
             let attendanceSameDay = matchedAttendances.filter(
                 attendance => attendance.Shift.shiftDate == selectedShift.shiftDate);
-
-            //CHECK ONLY REMOVE ATER
-            console.log(`--------validA's attendanceSameDay: ${JSON.stringify(attendanceSameDay)}`);
 
             let hasOverlap = attendanceSameDay.some(
                 attendance => 
@@ -124,52 +97,13 @@ function validAttendance(attendanceData){
                     && attendance.Shift.endTime > selectedShift.startTime
             );
 
-            //CHECK ONLY REMOVE ATER
-            console.log(`  --------validA's hasOverlap: ${hasOverlap}`);
-
             resolve(hasOverlap);
         })
         .catch((err) => {
-            reject('validAttendance catch: ' + err);
+            console.log('hasOverlapShift catch: employee or shift not found, ' + err);
+            reject('hasOverlapShift catch: employee or shift not found.');
         });
     });
-
-    
-
-    // // confirm that the employee and shift exist
-    // employeeExist(attendanceData.empID)
-    // .then((matchedEmp) => {
-    //     matchedEmp.find()
-    // })
-    // if (!employeeExist(attendanceData.empID)){
-    //     // CHECK ONLY REMOVE AFTER
-    //     console.log("----got in !employeeExist");
-
-    //     numErrors += 1;
-    //     rejReason += "/nEmployee not found."
-    // }
-    // if (!shiftExist(attendanceData.shiftID)){
-    //     // CHECK ONLY REMOVE AFTER
-    //     console.log("----got in !shiftExist");
-
-    //     numErrors += 1;
-    //     rejReason += "/nShift not found."
-    // }
-
-    // // Checks if employee is already signed up for that shift
-    // matchedAttendances = exports.getAttendancesByField("empID", attendanceData.empID);
-    // duplicateShift = matchedAttendances.findAll(
-    //     existingAttendance => existingAttendance.shiftID == attendanceData.shiftID
-    // );
-    // if (duplicateShift){
-    //     numErrors += 1;
-    //     rejReason += "/nEmployee is already registered for this shift."
-    // }
-
-    // if (!numErrors)
-    //     isValidAttendance = true;
-
-    // return [isValidAttendance, numErrors, rejReason];
 }
 
 //-------CRUD OPERATIONS-------
@@ -186,60 +120,28 @@ exports.addOneAttendance = function addOneAttendance(attendanceData) {
         attendanceData.shiftID = parseInt(attendanceData.shiftID);
     }
 
-    // CHECK ONLY REMOVE AFTER
-    console.log(`-----------attendanceData type: ${typeof(attendanceData)}`);
-    console.log(`-----------attendanceData: ${JSON.stringify(attendanceData)}`);
-
     return new Promise ((resolve, reject) => {
-        let numErrors = 0; // number of errors preventing attendance from being created
-        let rejReason = "";
-        let attendanceValidation = []; // [T/F (bool), numErrors(int), errMsg (str)]
-        let isValidAttendance = true; // DEFAULT FALSE      
-
-        // Assigning results of validation to individual variables for clarity
-        // attendanceValidation = validAttendance(attendanceData);
-        // // isValidAttendance = attendanceValidation[0];
-        // // numErrors = attendanceValidation[1];
-        // // rejReason = attendanceValidation[2];
-
-        // console.log(`-----------attendanceValidation: ${attendanceValidation}`);
-
-        validAttendance(attendanceData)
-        .then((attendanceValidation) => {
-            //CHECK ONLY REMOVE ATER
-            console.log(`--------validA's matchedAttendances: ${attendanceValidation}`)
-
-            // TODO: if else branch for attendanceVaidation
-
-            Attendance.create(attendanceData)
-            .then((attendance) => {
+        hasOverlapShift(attendanceData)
+        .then((hasOverlap) => {
+            if (!hasOverlap){
+                Attendance.create(attendanceData)
+                .then((attendance) => {
                 console.log(`Record for attendance successfully created.`);
                 resolve(attendance);
-            })
-            .catch((err) => {
-                console.log(`Failed to create attendance: ${err}`);
-                reject(`Failed to create attendance due to: ${err}`);
-            });
+                })
+                .catch((err) => {
+                    console.log(`Failed to create attendance: ${err}`);
+                    reject(`Failed to create attendance due to: ${err}`);
+                });
+            }
+            else {
+                console.log(`Failed to create attendance: overlapping shift times.`);
+                reject(`Failed to create attendance: overlapping shift times.`);
+            }            
         })
         .catch((err) => {
             reject('addOneAttendance catch: ' + err);
         });
-
-
-        // if (isValidAttendance){
-        //     Attendance.create(attendanceData)
-        //     .then((attendance) => {
-        //         console.log(`Record for attendance successfully created.`);
-        //         resolve(attendance);
-        //     })
-        //     .catch((err) => {
-        //         console.log(`Failed to create attendance: ${err}`);
-        //         reject(`Failed to create attendance due to: ${err}`);
-        //     });
-        // }
-        // else {
-        //     reject(`Failed to create attendance due ${numErrors} error(s) to: ${rejReason}`);
-        // }
     });
 };
 
@@ -274,8 +176,6 @@ exports.getAttendancesByField = function getAttendancesByField(field, val) {
             nest: true
         })
         .then((matchedAttendances) => {
-            console.log(`-----------matchedAttendances type: ${typeof(matchedAttendances)}`);
-            console.log(`-----------matchedAttendances: ${matchedAttendances}`);
             resolve(matchedAttendances);
         })
         .catch((error) => {
@@ -299,67 +199,34 @@ exports.updateOneAttendance = function updateOneAttendance(attendanceData) {
     }
 
     return new Promise ((resolve, reject) => {
-        let numErrors = 0; // number of errors preventing attendance from being created
-        let rejReason = "";
-        let attendanceValidation = []; // [T/F (bool), numErrors(int), errMsg (str)]
-        let isValidAttendance = false;        
 
-        // Assigning results of validation to individual variables for clarity
-        attendanceValidation = validAttendance(attendanceData);
-        isValidAttendance = attendanceValidation[0];
-        numErrors = attendanceValidation[1];
-        rejReason = attendanceValidation[2];
-
-        if (isValidAttendance){
-            Attendance.create(Attendance)
-            .then((attendance) => {
-                console.log(`Record for attendance successfully created.`);
+        hasOverlapShift(attendanceData)
+        .then((hasOverlap) => {
+            if (!hasOverlap){
+                Attendance.update({
+                    empID: attendanceData.empID,
+                    shiftID: attendanceData.shiftID,
+                    checkedIn: attendanceData.checkedIn,
+                }, {
+                    where: {attendanceID: attendanceData.attendanceID}
+                })
+                .then((attendance) => {
+                console.log(`Record for attendance successfully updated.`);
                 resolve(attendance);
-            })
-            .catch((err) => {
-                console.log(`Failed to create attendance: ${err}`);
-                reject(`Failed to create attendance due to: ${err}`);
-            });
-        }
-        else {
-            reject(`Failed to create attendance due ${numErrors} error(s) to: ${rejReason}`);
-        }
-        
-        if (isValidAttendance){
-            Attendance.update({
-                empID: attendanceData.empID,
-                shiftID: attendanceData.shiftID,
-                checkedIn: attendanceData.checkedIn,
-            }, {
-                where: {attendanceID: attendanceData.attendanceID}
-            })
-            .then((attendance) => {
-                // Found matching attendance
-                if (attendance > 0){
-                    console.log(
-                        `Record for attendance ID #${attendanceData.attendanceID} successfully updated.`
-                    );
-                    resolve(attendance);
-                }
-                // No attendance with matching ID
-                else {
-                    console.log(rejReason);
-                    reject(
-                        `Failed to update attendance due ${numErrors} error(s) to: ${rejReason}`
-                    );
-                }
-                
-            })
-            .catch((err) => {
-                console.log(`Failed to update attendance: ${err}`);
-                reject(`Failed to update attendance due to: ${err}`);
-            });
-        }
-        else {
-            reject(
-                `Failed to update attendance due to ${numErrors} error(s) to: ${rejReason}`
-            );
-        }
+                })
+                .catch((err) => {
+                    console.log(`Failed to update attendance: ${err}`);
+                    reject(`Failed to update attendance due to: ${err}`);
+                });
+            }
+            else {
+                console.log(`Failed to update attendance: overlapping shift times.`);
+                reject(`Failed to update attendance: overlapping shift times.`);
+            }            
+        })
+        .catch((err) => {
+            reject('updateOneAttendance catch: ' + err);
+        });
     })
 }
 
@@ -369,9 +236,15 @@ exports.deleteAttendanceByID = function deleteAttendanceByID(receivedAttendanceI
         Attendance.destroy({
             where: {attendanceID: receivedAttendanceID}
         })
-        .then(() => {
-            console.log(`Attendance #${receivedAttendanceID} deleted.`);
-            resolve();
+        .then((deletedCount) => {
+            if (deletedCount > 0){
+                console.log(`Attendance #${receivedAttendanceID} deleted.`);
+                resolve(`Attendance #${receivedAttendanceID} deleted.`);
+            }
+            else{
+                console.log(`Attendance #${receivedAttendanceID} not found.`);
+                reject(`Attendance #${receivedAttendanceID} not found.`);
+            }
         })
         .catch((err) => {
             console.log(`Failed to delete attendance #${receivedAttendanceID}: ${err}`);
