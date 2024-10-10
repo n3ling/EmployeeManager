@@ -39,6 +39,7 @@ const ShiftFields = [
     'endTime', 'isHoliday'
   ]
 exports.ShiftFields = ShiftFields;
+exports.ShiftModel = Shift;
 
 
 //-------HELPER FUNCTIONS-------
