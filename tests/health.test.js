@@ -336,3 +336,71 @@ describe('Shift Scheduling Tests', () => {
             .expect(200);
     },10000);
 });
+
+describe('Attendance Manager Tests', () => {
+
+    test('Create attendance record', async() => {
+        const resShift = await request(app)
+        .post('/shift/add')
+        .send({
+            shiftDate: "2025-01-25",
+            startTime: "10:00:00",
+            endTime: "17:30:00",
+            isHoliday: 0,
+        });
+        const resShiftGet = await request(app).get("/shift");
+        const successShiftResponse = JSON.parse(resShiftGet.text);
+
+        const attRecord = {
+            shiftID: successShiftResponse[successShiftResponse.length-1].shiftID,
+            empID: 1,
+            checkedIn: 0
+        }
+        const res = await request(app)
+        .post("/attendance/add")
+        .send(attRecord);
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toEqual({msg: "New attendance added."})
+    });
+
+    test('Read attendance records', async() => {
+        const res = await request(app)
+        .get("/attendance");
+        const successResponse = JSON.parse(res.text);
+        expect(res.statusCode).toBe(200);
+        expect(res.body[successResponse.length-1].empID).toBe(1);
+        expect(res.body[successResponse.length-1].checkedIn).toBe(0);
+    });
+
+    test('Get attendance by empID', async() => {
+        const res = await request(app)
+        .get("/attendance?empID=1");
+        expect(res.statusCode).toBe(200);
+        expect(res.body[0].empID).toEqual(1);
+    });
+
+    test('Get attempt for invalid parameter', async() => {
+        const res = await request(app)
+        .get("/attendance?attendanceID=0");
+        expect(res.body).toEqual([]);
+    });
+
+    
+
+    test('Delete attendance records', async() => {
+        const resAtt = await request(app).get("/attendance");
+        const successAttRes = JSON.parse(resAtt.text);
+
+        const res = await request(app)
+        .delete(`/attendance/delete/${successAttRes[successAttRes.length-1].attendanceID}`);
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({msg: "Attendance deleted."});
+
+        await request(app).delete(`/shift/delete/${successAttRes[successAttRes.length-1].shiftID}`);
+    });
+
+    test('Attempting to delete a non-existing attendance record', async() => {
+        const res = await request(app).delete("/attendance/delete/0");
+        expect(res.body).toEqual({msg: "Attendance #0 not found."});
+    });
+});
