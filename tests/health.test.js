@@ -344,7 +344,7 @@ describe('Shift Scheduling Tests', () => {
 describe('Attendance Manager Tests', () => {
 
     test('Create attendance record', async() => {
-        const resShift = await request(app)
+        await request(app)
         .post('/shift/add')
         .send({
             shiftDate: "2025-01-25",
@@ -407,7 +407,7 @@ describe('Attendance Manager Tests', () => {
     //     expect(res.body).toEqual({msg: "Attendance updated."});
     // });
 
-    
+
 
     test('Delete attendance records', async() => {
         const resAtt = await request(app).get("/attendance");
