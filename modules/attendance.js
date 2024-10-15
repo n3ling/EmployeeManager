@@ -70,7 +70,7 @@ function getAttendancesByEmpID(attendanceData, selectedShift){
     });
 }
 
-// Checks if the attendance is valid
+// Checks if the attendance is valid time-wise
 // Returns [T/F (bool), numErrors(int), errMsg (str)]
 function hasOverlapShift(attendanceData){
     return new Promise ((resolve, reject) => {
@@ -106,6 +106,33 @@ function hasOverlapShift(attendanceData){
     });
 }
 
+// Checks if the employee and shift exists
+function empAndShiftExists(attendanceData){
+    return new Promise ((resolve, reject) => {
+        employeeProfile.getEmployeesByField("employeeID", attendanceData.empID)
+        .then((employeesFound) => {
+            if (employeesFound.length > 0){
+                shiftScheduler.getShiftsByField("shiftID", attendanceData.shiftID)
+                .then((shiftsFound) => {
+                    if (shiftsFound.length > 0){
+                        resolve();
+                    }
+                    else {
+                        reject("Shift not found.");
+                    }
+                })
+            }
+            else{
+                reject("Employee not found.");
+            }
+        })
+        .catch((err) => {
+            console.log('empAndShiftExists catch: employee or shift not found, ' + err);
+            reject('empAndShiftExists catch: employee or shift not found.');
+        });
+    });
+}
+
 //-------CRUD OPERATIONS-------
 // Add a single attendance
 exports.addOneAttendance = function addOneAttendance(attendanceData) {
@@ -121,23 +148,29 @@ exports.addOneAttendance = function addOneAttendance(attendanceData) {
     }
 
     return new Promise ((resolve, reject) => {
-        hasOverlapShift(attendanceData)
-        .then((hasOverlap) => {
-            if (!hasOverlap){
-                Attendance.create(attendanceData)
-                .then((attendance) => {
-                console.log(`Record for attendance successfully created.`);
-                resolve(attendance);
-                })
-                .catch((err) => {
-                    console.log(`Failed to create attendance: ${err}`);
-                    reject(`Failed to create attendance due to: ${err}`);
-                });
-            }
-            else {
-                console.log(`Failed to create attendance: overlapping shift times.`);
-                reject(`Failed to create attendance: overlapping shift times.`);
-            }            
+        empAndShiftExists(attendanceData)
+        .then(()=>{
+            hasOverlapShift(attendanceData)
+            .then((hasOverlap) => {
+                if (!hasOverlap){
+                    Attendance.create(attendanceData)
+                    .then((attendance) => {
+                    console.log(`Record for attendance successfully created.`);
+                    resolve(attendance);
+                    })
+                    .catch((err) => {
+                        console.log(`Failed to create attendance: ${err}`);
+                        reject(`Failed to create attendance due to: ${err}`);
+                    });
+                }
+                else {
+                    console.log(`Failed to create attendance: overlapping shift times.`);
+                    reject(`Failed to create attendance: overlapping shift times.`);
+                }            
+            })
+            .catch((err) => {
+                reject('addOneAttendance catch: ' + err);
+            });
         })
         .catch((err) => {
             reject('addOneAttendance catch: ' + err);
