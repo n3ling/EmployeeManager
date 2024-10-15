@@ -2,6 +2,7 @@ const request = require('supertest');
 
 const app = require('../main');
 
+// health check suite
 describe('/ health check', () => {
     test('should return HTTP 200 response', async () => {
         const res = await request(app).get('/');
@@ -13,7 +14,8 @@ describe('/ health check', () => {
     });
 });
 
-describe('CRUD Tests', () => {
+// employee module suite
+describe('Employee Module Tests', () => {
     test('read test should return employee data', async () => {
         const res = await request(app).get('/employees');
         expect(res.statusCode).toBe(200);
@@ -188,6 +190,7 @@ describe('CRUD Tests', () => {
     },10000)
 });
 
+// shift module suite
 describe('Shift Scheduling Tests', () => {
     test('read test should return shift data', async () => {
         const res = await request(app).get('/shift');
@@ -337,6 +340,7 @@ describe('Shift Scheduling Tests', () => {
     },10000);
 });
 
+// attendance module suite
 describe('Attendance Manager Tests', () => {
 
     test('Create attendance record', async() => {
@@ -384,6 +388,24 @@ describe('Attendance Manager Tests', () => {
         .get("/attendance?attendanceID=0");
         expect(res.body).toEqual([]);
     });
+
+    // test('Update attendance record', async() => {
+    //     const resTestRecord = await request(app).get("/attendance");
+    //     const successTestRecord = JSON.parse(resTestRecord.text);
+
+    //     const updatedRecord = {
+    //         attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
+    //         shiftID: successTestRecord[successTestRecord.length-1].shiftID,
+    //         empID: 1,
+    //         checkedIn:1
+    //     }
+
+    //     const res = await request(app)
+    //     .post("/attendance/update")
+    //     .send(updatedRecord);
+    //     expect(res.statusCode).toBe(200);
+    //     expect(res.body).toEqual({msg: "Attendance updated."});
+    // });
 
     
 
