@@ -287,9 +287,14 @@ exports.checkInOut = function checkInOut(attendanceData) {
         }, {
             where: {attendanceID: attendanceData.attendanceID}
         })
-        .then((attendance) => {
-        console.log(`Check in status updated to ${attendanceData.checkedIn}.`);
-        resolve(attendance);
+        .then((updatedCount) => {
+            console.log(`Check in status updated to ${attendanceData.checkedIn}.`);
+            if (updatedCount > 0){
+                resolve(`Check in status updated to ${attendanceData.checkedIn}.`);
+            }
+            else {
+                reject("Shift not found.");
+            }
         })
         .catch((err) => {
             console.log(`Failed to update checked in status: ${err}`);
