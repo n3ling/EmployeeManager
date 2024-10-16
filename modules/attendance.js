@@ -232,33 +232,73 @@ exports.updateOneAttendance = function updateOneAttendance(attendanceData) {
     }
 
     return new Promise ((resolve, reject) => {
-
-        hasOverlapShift(attendanceData)
-        .then((hasOverlap) => {
-            if (!hasOverlap){
-                Attendance.update({
-                    empID: attendanceData.empID,
-                    shiftID: attendanceData.shiftID,
-                    checkedIn: attendanceData.checkedIn,
-                }, {
-                    where: {attendanceID: attendanceData.attendanceID}
-                })
-                .then((attendance) => {
-                console.log(`Record for attendance successfully updated.`);
-                resolve(attendance);
-                })
-                .catch((err) => {
-                    console.log(`Failed to update attendance: ${err}`);
-                    reject(`Failed to update attendance due to: ${err}`);
-                });
-            }
-            else {
-                console.log(`Failed to update attendance: overlapping shift times.`);
-                reject(`Failed to update attendance: overlapping shift times.`);
-            }            
+        empAndShiftExists(attendanceData)
+        .then(()=> {
+            hasOverlapShift(attendanceData)
+            .then((hasOverlap) => {
+                if (!hasOverlap){
+                    Attendance.update({
+                        empID: attendanceData.empID,
+                        shiftID: attendanceData.shiftID,
+                        checkedIn: attendanceData.checkedIn,
+                    }, {
+                        where: {attendanceID: attendanceData.attendanceID}
+                    })
+                    .then((attendance) => {
+                    console.log(`Record for attendance successfully updated.`);
+                    resolve(attendance);
+                    })
+                    .catch((err) => {
+                        console.log(`Failed to update attendance: ${err}`);
+                        reject(`Failed to update attendance due to: ${err}`);
+                    });
+                }
+                else {
+                    console.log(`Failed to update attendance: overlapping shift times.`);
+                    reject(`Failed to update attendance: overlapping shift times.`);
+                }            
+            })
+            .catch((err) => {
+                reject('updateOneAttendance catch: ' + err);
+            });
         })
         .catch((err) => {
             reject('updateOneAttendance catch: ' + err);
+        });
+    })
+}
+
+// Check or uncheck in to the attendance with the matching attendance ID
+exports.checkInOut = function checkInOut(attendanceData) {
+    // Casting to fields to appropriate type
+    if (typeof(attendanceData.attendanceID) === 'string'){
+        attendanceData.attendanceID = parseInt(attendanceData.attendanceID);
+    }
+    if (typeof(attendanceData.empID) === 'string'){
+        attendanceData.empID = parseInt(attendanceData.empID);
+    }
+    if (typeof(attendanceData.shiftID) === 'string'){
+        attendanceData.shiftID = parseInt(attendanceData.shiftID);
+    }
+
+    return new Promise ((resolve, reject) => {
+        Attendance.update({
+            checkedIn: attendanceData.checkedIn,
+        }, {
+            where: {attendanceID: attendanceData.attendanceID}
+        })
+        .then((updatedCount) => {
+            console.log(`Check in status updated to ${attendanceData.checkedIn}.`);
+            if (updatedCount > 0){
+                resolve(`Check in status updated to ${attendanceData.checkedIn}.`);
+            }
+            else {
+                reject("Shift not found.");
+            }
+        })
+        .catch((err) => {
+            console.log(`Failed to update checked in status: ${err}`);
+            reject(`Failed to update checked in status due to: ${err}`);
         });
     })
 }
