@@ -2,6 +2,7 @@ const request = require('supertest');
 
 const app = require('../main');
 
+// health check suite
 describe('/ health check', () => {
     test('should return HTTP 200 response', async () => {
         const res = await request(app).get('/');
@@ -13,7 +14,8 @@ describe('/ health check', () => {
     });
 });
 
-describe('CRUD Tests', () => {
+// employee module suite
+describe('Employee Module Tests', () => {
     test('read test should return employee data', async () => {
         const res = await request(app).get('/employees');
         expect(res.statusCode).toBe(200);
@@ -188,15 +190,16 @@ describe('CRUD Tests', () => {
     },10000)
 });
 
+// shift module suite
 describe('Shift Scheduling Tests', () => {
     test('read test should return shift data', async () => {
         const res = await request(app).get('/shift');
         expect(res.statusCode).toBe(200);
-        expect(res.body[0].shiftDate).toBe("2024-01-02");
-        expect(res.body[0].startTime).toBe("09:00:00");
-        expect(res.body[0].endTime).toBe("13:15:00");
+        expect(res.body[0].shiftDate).toBe("2026-01-02");
+        expect(res.body[0].startTime).toBe("15:00:00");
+        expect(res.body[0].endTime).toBe("17:30:00");
         expect(res.body[0].isHoliday).toBe(0);
-        expect(res.body[0].shiftID).toBe(2);
+        expect(res.body[0].shiftID).toBe(3);
         const successResponse = JSON.parse(res.text);
         console.log(successResponse.length);
     });
@@ -335,4 +338,201 @@ describe('Shift Scheduling Tests', () => {
             .delete(`/shift/delete/${successResponse[successResponse.length-1].shiftID}`)
             .expect(200);
     },10000);
+});
+
+// attendance module suite
+describe('Attendance Manager Tests', () => {
+
+    test('Create attendance record', async() => {
+        const attRecord = {
+            shiftID: 8,
+            empID: 1,
+            checkedIn: 0
+        }
+        const res = await request(app)
+        .post("/attendance/add")
+        .send(attRecord);
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({msg: "New attendance added."});
+    });
+
+    test('Attempt to create record with invalid empID', async() => {
+        const attRecord = {
+            shiftID: 8,
+            empID: 0,
+            checkedIn: 0
+        }
+        const res = await request(app)
+        .post("/attendance/add")
+        .send(attRecord);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            "msg": "addOneAttendance catch: Employee not found."
+          });
+    });
+
+    test('Attempt to create record with invalid shiftID', async() => {
+        const attRecord = {
+            shiftID: 0,
+            empID: 1,
+            checkedIn: 0
+        }
+        const res = await request(app)
+        .post("/attendance/add")
+        .send(attRecord);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            "msg": "addOneAttendance catch: Shift not found."
+          });
+    });
+
+    test('Attempt to create record with overlapping shift', async() => {
+        const attRecord = {
+            shiftID: 8,
+            empID: 1,
+            checkedIn: 0
+        }
+        const res = await request(app)
+        .post("/attendance/add")
+        .send(attRecord);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            "msg": "Failed to create attendance: overlapping shift times."
+          });
+    });
+
+    test('Read attendance records', async() => {
+        const res = await request(app)
+        .get("/attendance");
+        const successResponse = JSON.parse(res.text);
+        expect(res.statusCode).toBe(200);
+        expect(res.body[successResponse.length-1].empID).toBe(1);
+        expect(res.body[successResponse.length-1].checkedIn).toBe(0);
+    });
+
+    test('Get attendance by empID', async() => {
+        const res = await request(app)
+        .get("/attendance?empID=1");
+        expect(res.statusCode).toBe(200);
+        expect(res.body[0].empID).toEqual(1);
+    });
+
+    test('Get attempt for invalid parameter', async() => {
+        const res = await request(app)
+        .get("/attendance?attendanceID=0");
+        expect(res.body).toEqual([]);
+    });
+
+    test('Update attendance record', async() => {
+        const resTestRecord = await request(app).get("/attendance");
+        const successTestRecord = JSON.parse(resTestRecord.text);
+
+        const updatedRecord = {
+            attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
+            shiftID: 3,
+            empID: 1,
+            checkedIn:0
+        }
+
+        const res = await request(app)
+        .post("/attendance/update")
+        .send(updatedRecord);
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({msg: "Attendance updated."});
+    });
+
+    test('Checked in route', async() => {
+        const resTestRecord = await request(app).get("/attendance");
+        const successTestRecord = JSON.parse(resTestRecord.text);
+
+        const updatedRecord = {
+            attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
+            shiftID: 3,
+            empID: 1,
+            checkedIn:1
+        }
+
+        const res = await request(app)
+        .post("/attendance/checkin")
+        .send(updatedRecord);
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({msg: "Checked in status updated."});
+    });
+
+    // maybe test for number not 0 or 1 in checkedIn here
+
+    test('Update attempt with overlapping shift', async() => {
+        const resTestRecord = await request(app).get("/attendance");
+        const successTestRecord = JSON.parse(resTestRecord.text);
+
+        const updatedRecord = {
+            attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
+            shiftID: 3,
+            empID: 1,
+            checkedIn:0
+        }
+
+        const res = await request(app)
+        .post("/attendance/update")
+        .send(updatedRecord);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            msg: "Failed to update attendance: overlapping shift times."
+          });
+    });
+
+    test('Update attempt with nonexisting shift', async() => {
+        const resTestRecord = await request(app).get("/attendance");
+        const successTestRecord = JSON.parse(resTestRecord.text);
+
+        const updatedRecord = {
+            attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
+            shiftID: 0,
+            empID: 1,
+            checkedIn:0
+        }
+
+        const res = await request(app)
+        .post("/attendance/update")
+        .send(updatedRecord);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            msg: "updateOneAttendance catch: Shift not found."
+          });
+    });
+
+    test('Update attempt with invalid empID', async() => {
+        const resTestRecord = await request(app).get("/attendance");
+        const successTestRecord = JSON.parse(resTestRecord.text);
+
+        const updatedRecord = {
+            attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
+            shiftID: 3,
+            empID: 0,
+            checkedIn:0
+        }
+
+        const res = await request(app)
+        .post("/attendance/update")
+        .send(updatedRecord);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            msg: "updateOneAttendance catch: Employee not found."
+          });
+    });
+
+    test('Delete attendance records', async() => {
+        const resAtt = await request(app).get("/attendance");
+        const successAttRes = JSON.parse(resAtt.text);
+
+        const res = await request(app)
+        .delete(`/attendance/delete/${successAttRes[successAttRes.length-1].attendanceID}`);
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({msg: "Attendance deleted."});
+    });
+
+    test('Attempting to delete a non-existing attendance record', async() => {
+        const res = await request(app).delete("/attendance/delete/0");
+        expect(res.body).toEqual({msg: "Attendance #0 not found."});
+    });
 });
