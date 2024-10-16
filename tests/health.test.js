@@ -195,11 +195,11 @@ describe('Shift Scheduling Tests', () => {
     test('read test should return shift data', async () => {
         const res = await request(app).get('/shift');
         expect(res.statusCode).toBe(200);
-        expect(res.body[0].shiftDate).toBe("2024-01-02");
-        expect(res.body[0].startTime).toBe("09:00:00");
-        expect(res.body[0].endTime).toBe("13:15:00");
+        expect(res.body[0].shiftDate).toBe("2026-01-02");
+        expect(res.body[0].startTime).toBe("15:00:00");
+        expect(res.body[0].endTime).toBe("17:30:00");
         expect(res.body[0].isHoliday).toBe(0);
-        expect(res.body[0].shiftID).toBe(2);
+        expect(res.body[0].shiftID).toBe(3);
         const successResponse = JSON.parse(res.text);
         console.log(successResponse.length);
     });
@@ -344,19 +344,8 @@ describe('Shift Scheduling Tests', () => {
 describe('Attendance Manager Tests', () => {
 
     test('Create attendance record', async() => {
-        await request(app)
-        .post('/shift/add')
-        .send({
-            shiftDate: "2025-01-25",
-            startTime: "10:00:00",
-            endTime: "17:30:00",
-            isHoliday: 0,
-        });
-        const resShiftGet = await request(app).get("/shift");
-        const successShiftResponse = JSON.parse(resShiftGet.text);
-
         const attRecord = {
-            shiftID: successShiftResponse[successShiftResponse.length-1].shiftID,
+            shiftID: 8,
             empID: 1,
             checkedIn: 0
         }
@@ -389,23 +378,41 @@ describe('Attendance Manager Tests', () => {
         expect(res.body).toEqual([]);
     });
 
-    // test('Update attendance record', async() => {
-    //     const resTestRecord = await request(app).get("/attendance");
-    //     const successTestRecord = JSON.parse(resTestRecord.text);
+    test('Update attendance record', async() => {
+        const resTestRecord = await request(app).get("/attendance");
+        const successTestRecord = JSON.parse(resTestRecord.text);
 
-    //     const updatedRecord = {
-    //         attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
-    //         shiftID: successTestRecord[successTestRecord.length-1].shiftID,
-    //         empID: 1,
-    //         checkedIn:1
-    //     }
+        const updatedRecord = {
+            attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
+            shiftID: 3,
+            empID: 1,
+            checkedIn:0
+        }
 
-    //     const res = await request(app)
-    //     .post("/attendance/update")
-    //     .send(updatedRecord);
-    //     expect(res.statusCode).toBe(200);
-    //     expect(res.body).toEqual({msg: "Attendance updated."});
-    // });
+        const res = await request(app)
+        .post("/attendance/update")
+        .send(updatedRecord);
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({msg: "Attendance updated."});
+    });
+
+    test('Checked in route', async() => {
+        const resTestRecord = await request(app).get("/attendance");
+        const successTestRecord = JSON.parse(resTestRecord.text);
+
+        const updatedRecord = {
+            attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
+            shiftID: 3,
+            empID: 1,
+            checkedIn:1
+        }
+
+        const res = await request(app)
+        .post("/attendance/checkin")
+        .send(updatedRecord);
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({msg: "Checked in status updated."});
+    });
 
 
 
@@ -417,8 +424,6 @@ describe('Attendance Manager Tests', () => {
         .delete(`/attendance/delete/${successAttRes[successAttRes.length-1].attendanceID}`);
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({msg: "Attendance deleted."});
-
-        await request(app).delete(`/shift/delete/${successAttRes[successAttRes.length-1].shiftID}`);
     });
 
     test('Attempting to delete a non-existing attendance record', async() => {
