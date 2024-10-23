@@ -42,7 +42,7 @@ Attendance.belongsTo(shiftScheduler.ShiftModel, {foreignKey: 'shiftID'});
 
 // Enum object for valid fields in all lowercase
 const AttendanceFields = [
-    'shiftID', 'empID',
+    'shiftID',   'empID',
     'checkedIn', 'isPaid'
   ]
 exports.AttendanceFields = AttendanceFields;
