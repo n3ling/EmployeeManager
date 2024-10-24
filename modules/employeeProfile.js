@@ -92,6 +92,7 @@ var Employee = dataProcessor.sequelize.define('Employee', {
     },
     department: Sequelize.INTEGER,
     hireDate: Sequelize.DATEONLY,
+    payRate: Sequelize.DOUBLE,
 });
 
 // Enum object for valid fields in all lowercase
@@ -100,7 +101,7 @@ const EmpFields = [
     'email',      'addrcity',
     'addrprov',   'addrpostal',
     'ismanager',  'status',
-    'department'
+    'department', 'payRate'
   ]
 exports.EmpFields = EmpFields;
 exports.EmpModel = Employee;

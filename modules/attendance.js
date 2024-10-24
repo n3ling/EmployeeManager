@@ -29,6 +29,11 @@ var Attendance = dataProcessor.sequelize.define('Attendance', {
         defaultValue: false,
         allowNull: false
     },
+    isPaid: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: true
+    },
 });
 
 // Table associations
@@ -37,8 +42,8 @@ Attendance.belongsTo(shiftScheduler.ShiftModel, {foreignKey: 'shiftID'});
 
 // Enum object for valid fields in all lowercase
 const AttendanceFields = [
-    'shiftID', 'empID',
-    'checkedIn'
+    'shiftID',   'empID',
+    'checkedIn', 'isPaid'
   ]
 exports.AttendanceFields = AttendanceFields;
 
