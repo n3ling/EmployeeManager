@@ -289,6 +289,17 @@ app.post("/attendance/checkIn", (req, res) => {
     });
 })
 
+app.post("/attendance/pay", (req, res) => {
+    attendanceManagement.togglePaid(req.body)
+    .then(() => {
+        res.status(200).json({msg: "Paid status updated."});
+    })
+    .catch((err) => {
+        console.log({message: err});
+        res.status(400).json({msg: err});
+    });
+})
+
 app.delete("/attendance/delete/:attendanceID", (req, res) => {
     attendanceManagement.deleteAttendanceByID(req.params.attendanceID)
     .then(() => {

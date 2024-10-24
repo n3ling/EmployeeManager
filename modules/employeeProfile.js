@@ -191,8 +191,9 @@ exports.updateOneEmployee = function updateOneEmployee(empData) {
         if (typeof(empData.hireDate) === 'string'){
             empData.hireDate = Date.parse(empData.hireDate);
         }
-
-        // TODO: Validation for status
+        if (typeof(empData.payRate) != 'number'){
+            reject(`Pay rate must be a number.`);
+        }
 
         Employee.update({
             employeeID: empData.employeeID,
@@ -210,6 +211,7 @@ exports.updateOneEmployee = function updateOneEmployee(empData) {
             status: empData.status,
             department: empData.department,
             hireDate: empData.hireDate,
+            payRate: empData.payRate,
         }, {
             where: {employeeID: empData.employeeID}
         })

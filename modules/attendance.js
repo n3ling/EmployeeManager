@@ -279,32 +279,65 @@ exports.checkInOut = function checkInOut(attendanceData) {
     if (typeof(attendanceData.attendanceID) === 'string'){
         attendanceData.attendanceID = parseInt(attendanceData.attendanceID);
     }
-    if (typeof(attendanceData.empID) === 'string'){
-        attendanceData.empID = parseInt(attendanceData.empID);
-    }
-    if (typeof(attendanceData.shiftID) === 'string'){
-        attendanceData.shiftID = parseInt(attendanceData.shiftID);
+
+    return new Promise ((resolve, reject) => {
+        if (typeof(attendanceData.checkedIn) != 'boolean'){
+            reject(`Checked In status must be boolean.`);
+        }
+        else {
+            Attendance.update({
+                checkedIn: attendanceData.checkedIn,
+            }, {
+                where: {attendanceID: attendanceData.attendanceID}
+            })
+            .then((updatedCount) => {
+                console.log(`Check in status updated to ${attendanceData.checkedIn}.`);
+                if (updatedCount > 0){
+                    resolve(`Check in status updated to ${attendanceData.checkedIn}.`);
+                }
+                else {
+                    reject("Shift not found.");
+                }
+            })
+            .catch((err) => {
+                console.log(`Failed to update checked in status: ${err}`);
+                reject(`Failed to update checked in status due to: ${err}`);
+            });
+        }
+    })
+}
+
+// Updates the paid status in to the attendance with the matching attendance ID
+exports.togglePaid = function togglePaid(attendanceData) {
+    // Casting to fields to appropriate type
+    if (typeof(attendanceData.attendanceID) === 'string'){
+        attendanceData.attendanceID = parseInt(attendanceData.attendanceID);
     }
 
     return new Promise ((resolve, reject) => {
-        Attendance.update({
-            checkedIn: attendanceData.checkedIn,
-        }, {
-            where: {attendanceID: attendanceData.attendanceID}
-        })
-        .then((updatedCount) => {
-            console.log(`Check in status updated to ${attendanceData.checkedIn}.`);
-            if (updatedCount > 0){
-                resolve(`Check in status updated to ${attendanceData.checkedIn}.`);
-            }
-            else {
-                reject("Shift not found.");
-            }
-        })
-        .catch((err) => {
-            console.log(`Failed to update checked in status: ${err}`);
-            reject(`Failed to update checked in status due to: ${err}`);
-        });
+        if (typeof(attendanceData.isPaid) != 'boolean'){
+            reject(`Payment status must be boolean.`);
+        }
+        else {
+            Attendance.update({
+                isPaid: attendanceData.isPaid,
+            }, {
+                where: {attendanceID: attendanceData.attendanceID}
+            })
+            .then((updatedCount) => {
+                console.log(`Paid status updated to ${attendanceData.isPaid}.`);
+                if (updatedCount > 0){
+                    resolve(`Paid status updated to ${attendanceData.isPaid}.`);
+                }
+                else {
+                    reject("Shift not found.");
+                }
+            })
+            .catch((err) => {
+                console.log(`Failed to update paid status: ${err}`);
+                reject(`Failed to update paid status due to: ${err}`);
+            });
+        }
     })
 }
 
