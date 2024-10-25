@@ -25,7 +25,7 @@ describe('Employee Module Tests', () => {
         expect(res.body[1].employeeID).toBe(7);
         const successResponse = JSON.parse(res.text);
         console.log(successResponse.length);
-    });
+    },10000);
     test('create test should post employee', async () => {
         const res = await request(app)
           .post('/employees/add')
@@ -41,7 +41,8 @@ describe('Employee Module Tests', () => {
             addrPostal: "B1B1B1",
             status: "Active",
             department: 2,
-            hireDate: "2024-03-22"
+            hireDate: "2024-03-22",
+            payRate: 20
           });
           const successResponse = JSON.parse(res.text);
           console.log(successResponse)
@@ -62,7 +63,8 @@ describe('Employee Module Tests', () => {
             addrPostal: "B1B1B1",
             status: "Active",
             department: 2,
-            hireDate: "2024-03-22"
+            hireDate: "2024-03-22",
+            payRate: 20
           });
           const successResponse = JSON.parse(res.text);
           console.log(successResponse)
@@ -83,7 +85,8 @@ describe('Employee Module Tests', () => {
           addrPostal: "invalid",
           status: "Active",
           department: 2,
-          hireDate: "2024-03-22"
+          hireDate: "2024-03-22",
+          payRate: 20
         });
         const successResponse = JSON.parse(res.text);
         console.log(successResponse)
@@ -104,7 +107,8 @@ describe('Employee Module Tests', () => {
           addrPostal: "B1B1B1",
           status: "Active",
           department: 2,
-          hireDate: "2024-03-22"
+          hireDate: "2024-03-22",
+          payRate: 20
         });
         const successResponse = JSON.parse(res.text);
         console.log(successResponse)
@@ -125,11 +129,34 @@ describe('Employee Module Tests', () => {
           addrPostal: "B1B1B1",
           status: "Active",
           department: 2,
-          hireDate: "2024-03-22"
+          hireDate: "2024-03-22",
+          payRate: 20
         });
         const successResponse = JSON.parse(res.text);
         console.log(successResponse)
         expect(successResponse).toEqual({ msg: "Failed to create Employee record for invalid, invalid: SequelizeValidationError: Validation error: Validation isIn on addrProv failed" });
+    })
+    test('post attempt with payRate validation error', async () => {
+        const res = await request(app)
+        .post('/employees/add')
+        .send({
+          givenName: "invalid",
+          surname: "invalid",
+          email: "invalid@email.com",
+          password: "123abc",
+          SIN: "654321",
+          addrStreet: "123 Tester Street",
+          addrCity: "Toronto",
+          addrProv: "ON",
+          addrPostal: "B1B1B1",
+          status: "Active",
+          department: 2,
+          hireDate: "2024-03-22",
+          payRate: "aaa"
+        });
+        const successResponse = JSON.parse(res.text);
+        console.log(successResponse)
+        expect(successResponse).toEqual({ msg: "Failed to create Employee record for invalid, invalid: SequelizeDatabaseError: Data truncated for column 'payRate' at row 1" });
     })
     test('update test should update employee', async () => {
         const resGet = await request(app).get('/employees');
@@ -149,7 +176,8 @@ describe('Employee Module Tests', () => {
             addrPostal: "A2A2A2",
             status: "Active",
             department: 2,
-            hireDate: "2024-03-22"
+            hireDate: "2024-03-22",
+            payRate: 20
         }
         const res = await request(app)
             .post(`/employees/update`)
@@ -173,7 +201,8 @@ describe('Employee Module Tests', () => {
             addrPostal: "invalid",
             status: "Active",
             department: 2,
-            hireDate: "2024-03-22"
+            hireDate: "2024-03-22",
+            payRate: 20
         }
         const res = await request(app)
             .post(`/employees/update`)
@@ -341,13 +370,14 @@ describe('Shift Scheduling Tests', () => {
 });
 
 // attendance module suite
-describe('Attendance Manager Tests', () => {
+describe('Attendance Manager Module Tests', () => {
 
     test('Create attendance record', async() => {
         const attRecord = {
             shiftID: 8,
             empID: 1,
-            checkedIn: 0
+            checkedIn: false,
+            isPaid: false
         }
         const res = await request(app)
         .post("/attendance/add")
@@ -360,7 +390,8 @@ describe('Attendance Manager Tests', () => {
         const attRecord = {
             shiftID: 8,
             empID: 0,
-            checkedIn: 0
+            checkedIn: false,
+            isPaid: false
         }
         const res = await request(app)
         .post("/attendance/add")
@@ -375,7 +406,8 @@ describe('Attendance Manager Tests', () => {
         const attRecord = {
             shiftID: 0,
             empID: 1,
-            checkedIn: 0
+            checkedIn: false,
+            isPaid: false
         }
         const res = await request(app)
         .post("/attendance/add")
@@ -390,7 +422,8 @@ describe('Attendance Manager Tests', () => {
         const attRecord = {
             shiftID: 8,
             empID: 1,
-            checkedIn: 0
+            checkedIn: false,
+            isPaid: false
         }
         const res = await request(app)
         .post("/attendance/add")
@@ -398,6 +431,38 @@ describe('Attendance Manager Tests', () => {
         expect(res.statusCode).toBe(400);
         expect(res.body).toEqual({
             "msg": "Failed to create attendance: overlapping shift times."
+          });
+    });
+
+    test('Attempt to update checkedIn status with improper format', async() => {
+        const attRecord = {
+            shiftID: 8,
+            empID: 1,
+            checkedIn: 9,
+            isPaid: false
+        }
+        const res = await request(app)
+        .post("/attendance/checkIn")
+        .send(attRecord);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            "msg": "Checked In status must be boolean."
+          });
+    });
+
+    test('Attempt to update isPaid status with improper format', async() => {
+        const attRecord = {
+            shiftID: 8,
+            empID: 1,
+            checkedIn: false,
+            isPaid: 9
+        }
+        const res = await request(app)
+        .post("/attendance/pay")
+        .send(attRecord);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({
+            "msg": "Payment status must be boolean."
           });
     });
 
@@ -441,7 +506,7 @@ describe('Attendance Manager Tests', () => {
         expect(res.body).toEqual({msg: "Attendance updated."});
     });
 
-    test('Checked in route', async() => {
+    test('/attendance/checkIn route', async() => {
         const resTestRecord = await request(app).get("/attendance");
         const successTestRecord = JSON.parse(resTestRecord.text);
 
@@ -449,7 +514,8 @@ describe('Attendance Manager Tests', () => {
             attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
             shiftID: 3,
             empID: 1,
-            checkedIn:1
+            checkedIn: true,
+            isPaid: false
         }
 
         const res = await request(app)
@@ -459,7 +525,24 @@ describe('Attendance Manager Tests', () => {
         expect(res.body).toEqual({msg: "Checked in status updated."});
     });
 
-    // maybe test for number not 0 or 1 in checkedIn here
+    test('/attendance/pay route', async() => {
+        const resTestRecord = await request(app).get("/attendance");
+        const successTestRecord = JSON.parse(resTestRecord.text);
+
+        const updatedRecord = {
+            attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
+            shiftID: 3,
+            empID: 1,
+            checkedIn: true,
+            isPaid: true
+        }
+
+        const res = await request(app)
+        .post("/attendance/pay")
+        .send(updatedRecord);
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({msg: "Paid status updated."});
+    });
 
     test('Update attempt with overlapping shift', async() => {
         const resTestRecord = await request(app).get("/attendance");
@@ -469,7 +552,8 @@ describe('Attendance Manager Tests', () => {
             attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
             shiftID: 3,
             empID: 1,
-            checkedIn:0
+            checkedIn: false,
+            isPaid: false
         }
 
         const res = await request(app)
@@ -489,7 +573,8 @@ describe('Attendance Manager Tests', () => {
             attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
             shiftID: 0,
             empID: 1,
-            checkedIn:0
+            checkedIn: false,
+            isPaid: false
         }
 
         const res = await request(app)
@@ -509,7 +594,8 @@ describe('Attendance Manager Tests', () => {
             attendanceID: successTestRecord[successTestRecord.length-1].attendanceID,
             shiftID: 3,
             empID: 0,
-            checkedIn:0
+            checkedIn: false,
+            isPaid: false
         }
 
         const res = await request(app)
