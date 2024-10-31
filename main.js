@@ -315,36 +315,18 @@ app.delete("/attendance/delete/:attendanceID", (req, res) => {
 
 
 //-------PAYMENT CALCULATOR (EARNINGS) ROUTES-------
-// app.get("/paymentcalcu", (req, res) => {
-//     // No queries, get all attendances
-//     if (!Object.keys(req.query).length){
-//         attendanceManagement.getAllAttendances()
-//         .then((allAttendances) => {
-//             res.type('json');
-//             res.setHeader('Content-Type', 'application/json');
-//             res.status(200).json(allAttendances);
-//         })
-//         .catch((err) => {
-//             console.log({message: err});
-//             res.json({message: err});
-//         })
-//     }
-//     // Queries provided, filtering search by field and value
-//     else {
-//         let searchField = Object.keys(req.query)[0];
-//         let searchVal = Object.values(req.query)[0];
-//         attendanceManagement.getAttendancesByField(searchField, searchVal)
-//         .then((matchedAttendances) => {
-//             res.type('json');
-//             res.setHeader('Content-Type', 'application/json');
-//             res.status(200).json(matchedAttendances);
-//         })
-//         .catch((err) => {
-//             console.log({message: err});
-//             res.json({message: err});
-//         })
-//     }
-// })
+app.post("/earnings/all", (req, res) => {
+    paymentCalculator.getEarningsSummaryTotal(req.body)
+    .then((results) => {
+        res.type('json');
+        res.setHeader('Content-Type', 'application/json');
+        res.status(200).json(results);
+    })
+    .catch((err) => {
+        console.log({message: err});
+        res.status(400).json({msg: err});
+    });
+})
 
 app.post("/earnings/single", (req, res) => {
     paymentCalculator.getPaymentDetailsForOneEmp(req.body)
@@ -358,28 +340,6 @@ app.post("/earnings/single", (req, res) => {
         res.status(400).json({msg: err});
     });
 })
-
-// app.post("/attendance/checkIn", (req, res) => {
-//     attendanceManagement.checkInOut(req.body)
-//     .then(() => {
-//         res.status(200).json({msg: "Checked in status updated."});
-//     })
-//     .catch((err) => {
-//         console.log({message: err});
-//         res.status(400).json({msg: err});
-//     });
-// })
-
-// app.post("/attendance/pay", (req, res) => {
-//     attendanceManagement.togglePaid(req.body)
-//     .then(() => {
-//         res.status(200).json({msg: "Paid status updated."});
-//     })
-//     .catch((err) => {
-//         console.log({message: err});
-//         res.status(400).json({msg: err});
-//     });
-// })
 
 
 //-------SERVER OPERATION-------

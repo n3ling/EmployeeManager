@@ -198,6 +198,28 @@ exports.getAllAttendances = function getAllAttendances() {
     });
 };
 
+// Retrieve all attendances with shift tables joined
+exports.getAllAttendancesShiftExpanded = function getAllAttendancesShiftExpanded() {
+    return new Promise ((resolve, reject) => {
+        Attendance.findAll({
+            include: [{ // joining shift table
+                model: shiftScheduler.ShiftModel,
+                attributes: [
+                    'shiftID', 'shiftDate', 'startTime', 'endTime', 'isHoliday'
+                ]
+            }],
+            raw: true,
+            nest: true
+        })
+        .then((allAttendances) => {
+            resolve(allAttendances);
+        })
+        .catch((err) => {
+            reject('No results returned: ' + err);
+        });
+    });
+};
+
 // Retrieve a list of attendances with the matching status
 exports.getAttendancesByField = function getAttendancesByField(field, val) {
     if (typeof(field) != "string") {
