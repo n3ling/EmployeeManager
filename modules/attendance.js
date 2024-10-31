@@ -75,6 +75,8 @@ function getAttendancesByEmpID(attendanceData, selectedShift){
     });
 }
 
+exports.getAttendancesByEID = getAttendancesByEmpID;
+
 // Checks if the attendance is valid time-wise
 // Returns [T/F (bool), numErrors(int), errMsg (str)]
 function hasOverlapShift(attendanceData){
