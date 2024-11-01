@@ -26,6 +26,7 @@ exports.earningsFields = earningsFields;
 //-------HELPER FUNCTIONS-------
 // Calculate the total working hours and its breakdown 
 // for a given date range for the received array of attendances
+// Receives ([list of attendances], {fields in search filter}, bool, number)
 function calculateEarningsBreakdown(matchedAttendances, searchFilter){
     // Narrow down to only attendances within specified date range
     let filteredAttendances = matchedAttendances.filter(
@@ -38,47 +39,65 @@ function calculateEarningsBreakdown(matchedAttendances, searchFilter){
     let totalHoursOutstanding = 0;
     let totalHoursPaid = 0;
     let regularHoursOutstanding = 0;
-    let regularHoursPaid = 0;
     let holidayHoursOutstanding = 0;
+    let regularHoursPaid = 0;
     let holidayHoursPaid = 0;
+    // For wages, $ amounts
+    let regularWagesOwing = 0;
+    let holidayWagesOwing = 0;
+    let regularWagesPaid = 0;
+    let holidayWagesPaid = 0;
 
     // Tally up the hours worked into each category
     filteredAttendances.forEach(attendance => {
+        // break down & convert time from string to number
         let startHour = attendance.Shift.startTime.split(":")[0];
         let startMinutes = attendance.Shift.startTime.split(":")[1];
         let endHour = attendance.Shift.endTime.split(":")[0];
         let endMinutes = attendance.Shift.endTime.split(":")[1];
+
+        // calculate hours worked
         let shiftHoursWorked = endHour - startHour;
         let shiftMinutesWorked = endMinutes - startMinutes;
         shiftHoursWorked += shiftMinutesWorked/60; // convert minutes to percent of hour
 
         // only tally up shifts that were checked in
         if (attendance.checkedIn){
-                if (!attendance.isPaid && !attendance.Shift.isHoliday) {
-                    regularHoursOutstanding += shiftHoursWorked;
-                }
-                else if (!attendance.isPaid && attendance.Shift.isHoliday) {
-                    holidayHoursOutstanding += shiftHoursWorked;
-                }
-                else if (attendance.isPaid && !attendance.Shift.isHoliday) {
-                    regularHoursPaid += shiftHoursWorked;
-                }
-                else if (attendance.isPaid && attendance.Shift.isHoliday) {
-                    holidayHoursPaid += shiftHoursWorked;
-                }
+            if (!attendance.isPaid && !attendance.Shift.isHoliday) {
+                regularHoursOutstanding += shiftHoursWorked;
+                regularWagesOwing += shiftHoursWorked * attendance.Employee.payRate;
+            }
+            else if (!attendance.isPaid && attendance.Shift.isHoliday) {
+                holidayHoursOutstanding += shiftHoursWorked;
+                holidayWagesOwing += shiftHoursWorked * attendance.Employee.payRate;
+            }
+            else if (attendance.isPaid && !attendance.Shift.isHoliday) {
+                regularHoursPaid += shiftHoursWorked;
+                regularWagesPaid += shiftHoursWorked * attendance.Employee.payRate;
+            }
+            else if (attendance.isPaid && attendance.Shift.isHoliday) {
+                holidayHoursPaid += shiftHoursWorked;
+                holidayWagesPaid += shiftHoursWorked * attendance.Employee.payRate;
+            }
+                       
         }
     });
 
     totalHoursOutstanding = regularHoursOutstanding + holidayHoursOutstanding;
     totalHoursPaid = regularHoursPaid + holidayHoursPaid;
     
+    // this is what will be returned in the api
     return ({                        
         "regularHoursOutstanding": regularHoursOutstanding,
         "holidayHoursOutstanding": holidayHoursOutstanding,
         "regularHoursPaid": regularHoursPaid,                        
         "holidayHoursPaid": holidayHoursPaid,
         "totalHoursOutstanding": totalHoursOutstanding, 
-        "totalHoursPaid": totalHoursPaid,
+        "totalHoursPaid": totalHoursPaid,        
+        "regularWagesOwing": regularWagesOwing,
+        "holidayWagesOwing": holidayWagesOwing,
+        "regularWagesPaid": regularWagesPaid,
+        "holidayWagesPaid": holidayWagesPaid,
         "attendancesList": filteredAttendances
     });
 }
@@ -98,11 +117,11 @@ exports.getEarningsSummaryTotal = function getEarningsSummaryTotal(searchFilter)
     }
 
     return new Promise ((resolve, reject) => {
-        attendance.getAllAttendancesShiftExpanded()
-        .then((allAttendances) => {
-            if (allAttendances.length > 0){
+        attendance.getAllAttendancesExpanded()
+        .then((allAttendancesJoined) => {
+            if (allAttendancesJoined.length > 0){
                 let earningsBreakdown = calculateEarningsBreakdown(
-                    allAttendances, searchFilter);
+                    allAttendancesJoined, searchFilter);
 
                 resolve(earningsBreakdown);
             }
@@ -135,13 +154,14 @@ exports.getPaymentDetailsForOneEmp = function getPaymentDetailsForOneEmp(searchF
         .then((employeesFound) => {
             if (employeesFound.length > 0){
                 // Get only attendances from specified employee
-                attendance.getAttendancesByEID(searchFilter, null) // null is for shifts, ignore here
-                .then((results) => {
+                attendance.getAttendancesByEID(searchFilter, null) // 2nd arg is for shifts, ignore here
+                .then((attendancesForEmpID) => {
                     // results: [[attendances from matching employee], [shifts matching shiftID]]
                     // [shifts matching shiftID] is ignored here
-                    let matchedAttendances = results[0];
+                    let matchedAttendances = attendancesForEmpID[0];
                     let earningsBreakdown = calculateEarningsBreakdown(
-                                                matchedAttendances, searchFilter);
+                                                matchedAttendances, 
+                                                searchFilter);
 
                     resolve(earningsBreakdown);
                 })

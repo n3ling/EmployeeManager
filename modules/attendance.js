@@ -50,18 +50,27 @@ exports.AttendanceFields = AttendanceFields;
 
 //-------HELPER FUNCTIONS-------
 // Gets all the shift information for attendances from a given employee
+// Returns the results with the employee & shift tables joined
 function getAttendancesByEmpID(attendanceData, selectedShift){
     return new Promise ((resolve, reject) => {
         Attendance.findAll({
             where: {
                 ["empID"]: attendanceData.empID // only get attendances from the matching employee
             },
-            include: [{ // joining shift table
-                model: shiftScheduler.ShiftModel,
-                attributes: [
-                    'shiftID', 'shiftDate', 'startTime', 'endTime', 'isHoliday'
-                ]
-            }],
+            include: [
+                { // joining the employee table
+                    model: employeeProfile.EmpModel,
+                    attributes: [
+                        'employeeID', 'givenName', 'surname', 'payRate'
+                    ]
+                },
+                { // joining shift table
+                    model: shiftScheduler.ShiftModel,
+                    attributes: [
+                        'shiftID', 'shiftDate', 'startTime', 'endTime', 'isHoliday'
+                    ]
+                }
+            ],
             raw: true,
             nest: true
         })
@@ -198,16 +207,24 @@ exports.getAllAttendances = function getAllAttendances() {
     });
 };
 
-// Retrieve all attendances with shift tables joined
-exports.getAllAttendancesShiftExpanded = function getAllAttendancesShiftExpanded() {
+// Retrieve all attendances with employee & shift tables joined
+exports.getAllAttendancesExpanded = function getAllAttendancesExpanded() {
     return new Promise ((resolve, reject) => {
         Attendance.findAll({
-            include: [{ // joining shift table
-                model: shiftScheduler.ShiftModel,
-                attributes: [
-                    'shiftID', 'shiftDate', 'startTime', 'endTime', 'isHoliday'
-                ]
-            }],
+            include: [
+                { // joining the employee table
+                    model: employeeProfile.EmpModel,
+                    attributes: [
+                        'employeeID', 'givenName', 'surname', 'payRate'
+                    ]
+                },
+                { // joining shift table
+                    model: shiftScheduler.ShiftModel,
+                    attributes: [
+                        'shiftID', 'shiftDate', 'startTime', 'endTime', 'isHoliday'
+                    ]
+                }
+            ],
             raw: true,
             nest: true
         })
