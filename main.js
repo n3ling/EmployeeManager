@@ -6,6 +6,7 @@ const dataProcessor = require("./data_processor.js");
 const employeeProfile = require("./modules/employeeProfile.js");
 const shiftScheduler = require("./modules/shiftScheduling.js");
 const attendanceManagement = require("./modules/attendance.js");
+const paymentCalculator = require("./modules/paymentCalc.js");
 const sequelize = require("sequelize");
 const path = require("path");
 const cors = require("cors");
@@ -310,6 +311,35 @@ app.delete("/attendance/delete/:attendanceID", (req, res) => {
         res.status(400).json({msg: err});
     })
 });
+
+
+
+//-------PAYMENT CALCULATOR (EARNINGS) ROUTES-------
+app.post("/earnings/all", (req, res) => {
+    paymentCalculator.getEarningsSummaryTotal(req.body)
+    .then((results) => {
+        res.type('json');
+        res.setHeader('Content-Type', 'application/json');
+        res.status(200).json(results);
+    })
+    .catch((err) => {
+        console.log({message: err});
+        res.status(400).json({msg: err});
+    });
+})
+
+app.post("/earnings/single", (req, res) => {
+    paymentCalculator.getPaymentDetailsForOneEmp(req.body)
+    .then((results) => {
+        res.type('json');
+        res.setHeader('Content-Type', 'application/json');
+        res.status(200).json(results);
+    })
+    .catch((err) => {
+        console.log({message: err});
+        res.status(400).json({msg: err});
+    });
+})
 
 
 //-------SERVER OPERATION-------

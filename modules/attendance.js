@@ -50,18 +50,27 @@ exports.AttendanceFields = AttendanceFields;
 
 //-------HELPER FUNCTIONS-------
 // Gets all the shift information for attendances from a given employee
+// Returns the results with the employee & shift tables joined
 function getAttendancesByEmpID(attendanceData, selectedShift){
     return new Promise ((resolve, reject) => {
         Attendance.findAll({
             where: {
                 ["empID"]: attendanceData.empID // only get attendances from the matching employee
             },
-            include: [{ // joining shift table
-                model: shiftScheduler.ShiftModel,
-                attributes: [
-                    'shiftID', 'shiftDate', 'startTime', 'endTime', 'isHoliday'
-                ]
-            }],
+            include: [
+                { // joining the employee table
+                    model: employeeProfile.EmpModel,
+                    attributes: [
+                        'employeeID', 'givenName', 'surname', 'payRate'
+                    ]
+                },
+                { // joining shift table
+                    model: shiftScheduler.ShiftModel,
+                    attributes: [
+                        'shiftID', 'shiftDate', 'startTime', 'endTime', 'isHoliday'
+                    ]
+                }
+            ],
             raw: true,
             nest: true
         })
@@ -74,6 +83,8 @@ function getAttendancesByEmpID(attendanceData, selectedShift){
         });
     });
 }
+
+exports.getAttendancesByEID = getAttendancesByEmpID;
 
 // Checks if the attendance is valid time-wise
 // Returns [T/F (bool), numErrors(int), errMsg (str)]
@@ -187,6 +198,36 @@ exports.addOneAttendance = function addOneAttendance(attendanceData) {
 exports.getAllAttendances = function getAllAttendances() {
     return new Promise ((resolve, reject) => {
         Attendance.findAll({raw: true, nest: true})
+        .then((allAttendances) => {
+            resolve(allAttendances);
+        })
+        .catch((err) => {
+            reject('No results returned: ' + err);
+        });
+    });
+};
+
+// Retrieve all attendances with employee & shift tables joined
+exports.getAllAttendancesExpanded = function getAllAttendancesExpanded() {
+    return new Promise ((resolve, reject) => {
+        Attendance.findAll({
+            include: [
+                { // joining the employee table
+                    model: employeeProfile.EmpModel,
+                    attributes: [
+                        'employeeID', 'givenName', 'surname', 'payRate'
+                    ]
+                },
+                { // joining shift table
+                    model: shiftScheduler.ShiftModel,
+                    attributes: [
+                        'shiftID', 'shiftDate', 'startTime', 'endTime', 'isHoliday'
+                    ]
+                }
+            ],
+            raw: true,
+            nest: true
+        })
         .then((allAttendances) => {
             resolve(allAttendances);
         })
