@@ -622,3 +622,73 @@ describe('Attendance Manager Module Tests', () => {
         expect(res.body).toEqual({msg: "Attendance #0 not found."});
     });
 });
+
+describe('Payment Calculator Module Tests', () => {
+    test('Test successful /earnings/all route', async() => {
+        const dateRange = {
+            startDate: "2024-01-08",
+            endDate: "2024-12-31"
+        }
+
+        const res = await request(app)
+        .post("/earnings/all")
+        .send(dateRange);
+        expect(res.statusCode).toBe(200);
+    });
+
+    test('Test successful /earnings/single route', async() => {
+        const empSearch = {
+            empID: 1,
+            startDate: "2024-01-08",
+            endDate: "2024-12-31"
+        }
+
+        const res = await request(app)
+        .post("/earnings/single")
+        .send(empSearch);
+        expect(res.statusCode).toBe(200);
+    });
+
+    test('Attempt to find employee earnings for non-existing employee', async() => {
+        const empSearch = {
+            empID: 2,
+            startDate: "2024-01-08",
+            endDate: "2024-12-31"
+        }
+
+        const res = await request(app)
+        .post(empSearch)
+        .send(empSearch);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toEqual({msg: "Employee not found."})
+    });
+
+    test('Attendances list returns empty on query no match for /earnings/all', async() => {
+        const dateRange = {
+            startDate: "2020-01-08",
+            endDate: "2020-12-31"
+        }
+
+        const res = await request(app)
+        .post("/earnings/all")
+        .send(dateRange);
+
+        const jsonData = JSON.parse(res.text);
+        expect(jsonData.attendancesList).toEqual([]);
+    });
+
+    test('Attendances list returns empty on query no match for /earnings/single', async() => {
+        const empSearch = {
+            empID: 1,
+            startDate: "2020-01-08",
+            endDate: "2020-12-31"
+        }
+
+        const res = await request(app)
+        .post("/earnings/all")
+        .send(empSearch);
+
+        const jsonData = JSON.parse(res.text);
+        expect(jsonData.attendancesList).toEqual([]);
+    });
+});
