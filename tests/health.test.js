@@ -657,7 +657,7 @@ describe('Payment Calculator Module Tests', () => {
         }
 
         const res = await request(app)
-        .post(empSearch)
+        .post("/earnings/single")
         .send(empSearch);
         expect(res.statusCode).toBe(400);
         expect(res.body).toEqual({msg: "Employee not found."})
