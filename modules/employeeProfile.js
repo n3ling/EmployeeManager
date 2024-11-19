@@ -155,7 +155,7 @@ exports.getAllEmployees = function getAllEmployees() {
 };
 
 // Retrieve a list of employees with the matching status
-exports.getEmployeesByField = function getEmployeesByField(field, val) {
+exports.getEmployeesByField = function getEmployeesByField(field, val) {    
     if (typeof(field) != "string") {
         field = String(field);
     }    
@@ -178,6 +178,49 @@ exports.getEmployeesByField = function getEmployeesByField(field, val) {
             reject(`No employees with ${field}: ${val}: ` + error);
         });
     });
+};
+
+// For authenticating user login
+exports.employeeLogin = function employeeLogin(loginCredentials) {
+    return new Promise ((resolve, reject) => {
+        if (!loginCredentials.hasOwnProperty("email")
+            && !loginCredentials.hasOwnProperty("password")) {
+                reject("Missing 'email' and 'pw' fields in json.");
+        }
+        else {
+            // finds user with matching email first
+            Employee.findAll({
+                where: {
+                    ["email"]: loginCredentials.email,
+                },
+                raw: true,
+                nest: true
+            })
+            .then((matchedEmployees) => {
+                if (matchedEmployees.length) {
+                    // checks if hashed pw matches
+                    bcrypt.compare(loginCredentials.password, matchedEmployees[0].password)
+                    .then( (isMatch) => {
+                        if (isMatch) {
+                            resolve(matchedEmployees);
+                        }
+                        else {
+                            reject("No user with matching credentials");
+                        }
+                    })
+                    .catch((error) => {
+                        reject(`No user with matching credentials: ` + error);
+                    });
+                }
+                else {
+                    reject("No user with matching credentials");
+                }                
+            })
+            .catch((error) => {
+                reject(`No user with matching credentials: ` + error);
+            });
+        }
+    });
 
 };
 
@@ -195,35 +238,47 @@ exports.updateOneEmployee = function updateOneEmployee(empData) {
             reject(`Pay rate must be a number.`);
         }
 
-        Employee.update({
-            employeeID: empData.employeeID,
-            givenName: empData.givenName,
-            surname: empData.surname,
-            email: empData.email,
-            password: empData.password,
-            SIN: empData.SIN,
-            addrStreet: empData.addrStreet,
-            addrCity: empData.addrCity,
-            addrProv: empData.addrProv,
-            addrPostal: empData.addrPostal,
-            isManager: empData.isManager,
-            empManagerID: empData.empManagerID,
-            status: empData.status,
-            department: empData.department,
-            hireDate: empData.hireDate,
-            payRate: empData.payRate,
-        }, {
-            where: {employeeID: empData.employeeID}
+        bcrypt.hash(empData.password, 10).then(hash => {
+            let pw = hash;
+
+            Employee.update({
+                employeeID: empData.employeeID,
+                givenName: empData.givenName,
+                surname: empData.surname,
+                email: empData.email,
+                password: pw,
+                SIN: empData.SIN,
+                addrStreet: empData.addrStreet,
+                addrCity: empData.addrCity,
+                addrProv: empData.addrProv,
+                addrPostal: empData.addrPostal,
+                isManager: empData.isManager,
+                empManagerID: empData.empManagerID,
+                status: empData.status,
+                department: empData.department,
+                hireDate: empData.hireDate,
+                payRate: empData.payRate,
+            }, {
+                where: {employeeID: empData.employeeID}
+            })
+            .then(() => {
+                console.log(`Record for ${empData.surname}, ${empData.givenName} updated.`);
+                resolve();
+            })
+            .catch((err) => {
+                console.log(`Failed to update the record for ${empData.surname}, ${empData.givenName}: ${err}`);
+                reject(`Failed to update the record for ${empData.surname}, ${empData.givenName}: ${err}`);
+            });
+
         })
-        .then(() => {
-            console.log(`Record for ${empData.surname}, ${empData.givenName} updated.`);
-            resolve();
-        })
-        .catch((err) => {
-            console.log(`Failed to update the record for ${empData.surname}, ${empData.givenName}: ${err}`);
-            reject(`Failed to update the record for ${empData.surname}, ${empData.givenName}: ${err}`);
+        .catch(err => {
+            console.log(err);
+            reject(`hash error: ${err}`);
         });
-    })
+    });
+
+        
+    
 }
 
 // Delete the employee with the matching employee ID
