@@ -5,6 +5,8 @@
   "main": "main.js",
   "scripts": {
     "test": "jest --forceExit --runInBand",
+    "coverage": "jest --forceExit --runInBand --coverage",
+    "view-test-report": "start ./coverage/lcov-report/index.html",
     "start": "node main.js"
   },
   "author": "",

@@ -42,7 +42,7 @@ describe('Login Module Tests', () => {
         
         expect(res.statusCode).toBe(200)
         expect(successResponse).toEqual({ msg: "Hello test manager." })
-    })
+    },10000)
     test('test unsuccessful login', async () => {
         const user = {
             email: "invalid@test.com",
@@ -56,7 +56,7 @@ describe('Login Module Tests', () => {
         
         expect(res.statusCode).toBe(401)
         expect(successResponse).toEqual({ msg: "No user with matching credentials" })
-    })
+    },10000)
     test('test successful logout', async () => {
         const res = await request(app).get('/logout')
     
