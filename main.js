@@ -52,6 +52,11 @@ corsOption = {
 }
 app.use(cors(corsOption));
 
+app.use((req, res, next) => {
+    res.header({"Access-Control-Allow-Origin": "*"});
+    next();
+}) 
+
 // For highlighting active menu
 // ActiveRoute value = active route, eg, "/employees/add"
 app.use(function(req, res, next){
