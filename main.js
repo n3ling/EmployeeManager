@@ -71,6 +71,7 @@ app.use(clientSessions({
     activeDuration: 30 * 60 * 1000, // extend by 30 mins per request
     cookies: {
         httpOnly: true,
+        secure: true,
         sameSite: "None",
         path: '/',
     },
