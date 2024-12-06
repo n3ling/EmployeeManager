@@ -70,6 +70,7 @@ app.use(clientSessions({
     duration: 30 * 60 * 1000, // 30 mins until timeout
     activeDuration: 30 * 60 * 1000, // extend by 30 mins per request
     cookies: {
+        httpOnly: false,
         sameSite: "None",
     },
 }));
