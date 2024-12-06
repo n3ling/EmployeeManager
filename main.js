@@ -49,7 +49,11 @@ corsOption = {
     origin: ["https://employee-manager-ui.vercel.app/", "http://localhost:8080"],
     credentials: true
 }
-app.use(cors(corsOption));
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // For highlighting active menu
 // ActiveRoute value = active route, eg, "/employees/add"
