@@ -45,7 +45,6 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
 // Allow for cross site access
-app.use(cors());
 corsOption = {
     origin: ["https://employee-manager-ui.vercel.app/", "http://localhost:8080"],
     credentials: true
