@@ -133,6 +133,14 @@ app.post("/login", (req, res) => {
             email: matchedEmployee[0].email,
             isManager: matchedEmployee[0].isManager
         };
+
+          res.cookie('sessionID', req.sessionID, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'None',
+            path: '/',
+          });
+        
         res.status(200).json({msg: `Hello ${matchedEmployee[0].givenName}.`});
     })
     .catch((err) => {
