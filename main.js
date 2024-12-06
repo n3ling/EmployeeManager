@@ -69,11 +69,6 @@ app.use(clientSessions({
     secret: "MXihTBe6wt19VpSrl5a9ivSV",
     duration: 30 * 60 * 1000, // 30 mins until timeout
     activeDuration: 30 * 60 * 1000, // extend by 30 mins per request
-    cookie: {
-        httpOnly: true, // Cookie can't be accessed by JavaScript
-        secure: true, // Ensures the cookie is only sent over HTTPS
-        sameSite: 'none', // Allows cross-origin requests
-  }
 }));
 
 // Grants access to "session" object for all templates
