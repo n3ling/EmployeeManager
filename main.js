@@ -70,9 +70,8 @@ app.use(clientSessions({
     duration: 30 * 60 * 1000, // 30 mins until timeout
     activeDuration: 30 * 60 * 1000, // extend by 30 mins per request
     cookie: {
-      httpOnly: true, // Prevent client-side JS access
-      secure: process.env.NODE_ENV === 'production', // Send cookie over HTTPS only in production
-      sameSite: 'Strict', // Adjust as needed ('Strict', 'Lax', or 'None')
+      httpOnly: true,
+      sameSite: 'None', 
     },
 }));
 
