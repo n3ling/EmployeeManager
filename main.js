@@ -69,10 +69,10 @@ app.use(clientSessions({
     secret: "MXihTBe6wt19VpSrl5a9ivSV",
     duration: 30 * 60 * 1000, // 30 mins until timeout
     activeDuration: 30 * 60 * 1000, // extend by 30 mins per request
-    cookie: {
-    httpOnly: true, // Helps prevent XSS attacks
-    secure: true, // Ensure secure cookies in production
-    sameSite: 'None', // Required for cross-origin requests
+    cookies: {
+        httpOnly: true, // Helps prevent XSS attacks
+        secure: true, // Ensure secure cookies in production
+        sameSite: 'None', // Required for cross-origin requests
   },
 }));
 
