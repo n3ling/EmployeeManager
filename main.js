@@ -50,7 +50,10 @@ corsOption = {
     credentials: true
 }
 // Apply CORS middleware
-app.use(cors(corsOptions));
+app.use(cors(corsOption));
+
+// Handle preflight requests
+app.options('*', cors(corsOption));
 
 // For highlighting active menu
 // ActiveRoute value = active route, eg, "/employees/add"
